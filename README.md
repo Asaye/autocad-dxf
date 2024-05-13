@@ -60,7 +60,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 
 ### New updates in this version
 
-- [KEYS](https://github.com/Asaye/autocad-dxf/KEYS.json) and [CODES](https://github.com/Asaye/autocad-dxf/CODES.json) properties are added. These properties also have accessible JSON files with descriptions and AutoCAD dxf codes for each key used in ```tables```, ```blocks``` and ```entities``` variables discussed below.
+- [KEYS](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json) and [CODES](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json) properties are added. These properties also have accessible JSON files with descriptions and AutoCAD dxf codes for each key used in ```tables```, ```blocks``` and ```entities``` variables discussed below.
 - More properties are added to ```DIMSTYLE``` property in ```tables```.
 
 # Constructor
@@ -108,7 +108,7 @@ console.log(res.blocks);
 ``` 
 ### Custom keys 
 
-For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` property while the corresponding AutoCAD codes can be referred via the ```CODES``` property.
+For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` [link](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json) property while the corresponding AutoCAD codes can be referred via the ```CODES``` [link](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)property.
 ```
 const Entities = require("autocad-dxf");
 const data = "DATA_FROM_DXF_FILE";
