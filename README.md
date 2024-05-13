@@ -58,14 +58,19 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 });
 ```
 
+### New updates in this version
+
+- [KEYS](https://github.com/Asaye/autocad-dxf/KEYS.json) and [CODES](https://github.com/Asaye/autocad-dxf/CODES.json) properties are added. These properties also have accessible JSON files with descriptions and AutoCAD dxf codes for each key used in ```tables```, ```blocks``` and ```entities``` variables discussed below.
+- More properties are added to ```DIMSTYLE``` property in ```tables```.
+
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 
 ```
 const res = new Entities(data, tolerance);
 ```
-```data``` - is a string data which is read from the dxf file. This is an optional parameter. If not provided, user defined data can be used to call the built-in functions via the ```Entities``` class object. 
-```tolerance``` - is a tolerable numerical difference between two numbers to be considered equal. This is an optional parameter. The default value is 0.001.
+```data``` - is a string data which is read from the dxf file. This is an optional parameter. If not provided, user defined data can be used to call the built-in functions via the ```Entities``` class object. The user defined data should be as per the custom keys defined in this module. The list of these custom keys can be accessed via the ```KEYS``` property,  
+```tolerance``` - is a tolerable numerical difference between two numbers to be considered equal. This is an optional parameter. The default value is 0.0001.
 
 ### Get all parsed data
 
@@ -78,7 +83,7 @@ const res = new Entities(data);
 console.log(res.entities);
 
 ``` 
-### Get AutoCAD file information 
+### Get AutoCAD document information 
 
 The ```tables``` property holds the list of all AutoCAD file related information. It includes the list of all layers, dimension styles, text styles, line types, blocks, coordinates systems and view ports. The ```tables``` property is a json with the following keys: ```LTYPE```, ```LAYER```, ```VIEW```, ```UCS```, ```APPID```, ```DIMSTYLE```, ```BLOCK_RECORD```, ```VPORT``` and ```STYLE``` with each key having a value of an array of json data associated with the respective key. 
 For instantance, the list of all AutoCAD layers can be printed in the following way.
@@ -99,6 +104,19 @@ const Entities = require("autocad-dxf");
 const data = "DATA_FROM_DXF_FILE";
 const res = new Entities(data);
 console.log(res.blocks);
+
+``` 
+### Custom keys 
+
+For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` property while the corresponding AutoCAD codes can be referred via the ```CODES``` property.
+```
+const Entities = require("autocad-dxf");
+const data = "DATA_FROM_DXF_FILE";
+const res = new Entities(data);
+console.log(res.KEYS);  // list of all keys for all blocks, entities and tables
+console.log(res.CODES); // list of all keys along with the descriptions and 
+						// corresponding AutoCAD dxf codes for all blocks, 
+						// entities and tables
 
 ``` 
 

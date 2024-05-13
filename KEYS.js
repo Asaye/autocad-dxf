@@ -1,0 +1,37 @@
+module.exports = {
+	// entities
+	"AcDbPoint": ["layer", "etype", "line_scale", "color", "visibility", "x", "y"],
+	"AcDbLine": ["layer", "etype", "line_scale", "color", "visibility", "start_x", "start_y", "end_x", "end_y", "line_type"],
+	"AcDbDimension": ["layer", "etype", "line_scale", "color", "visibility",  "x", "y", "type", "text_override", "rotation", "ext_line_rotation", "attachement_point", "leader_length", "actual_measurement", "dimension_style", "x_text", "specific_type", "leader_end_x", "leader_end_y", "location_x", "location_y", "ext_line1_x", "ext_line2_x", "ext_line1_y", "ext_line2_y", "vertex_x", "vertex_y", "dim_first_point_x", "dim_first_point_y", "arc_dim_line_x", "arc_dim_line_y", "ext_line1_p1_x", "ext_line1_p2_x", "ext_line2_p1_x", "ext_line2_p2_x", "ext_line1_p1_y", "ext_line1_p2_y", "ext_line2_p1_y", "ext_line2_p2_y"],
+	"AcDbCircle": ["layer", "etype", "line_scale",  "color", "visibility", "x", "y", "radius"],
+	"AcDbArc": ["layer", "etype", "line_scale","color", "visibility",  "x", "y", "radius", "start_angle", "end_angle"],
+	"AcDbEllipse": ["layer", "etype", "line_scale", "color", "visibility",  "x", "y", "major_end_dx", "major_end_dy", "minorToMajor", "start_angle", "end_angle"],
+	"AcDbPolyline": ["layer", "etype", "line_scale","color", "visibility",   "type", "vertices", "number_of_vertices"],
+	"AcDbText": ["layer", "etype", "line_scale", "color", "visibility", "x", "y", "text", "style", "height", "rotation", "width", "character_width", "rotation"],
+	"AcDbMtext": ["layer", "etype", "line_scale","color", "visibility",  "x", "y", "text", "style", "height", "rotation", "drawing_direction"],
+	"AcDbMline": ["layer", "etype","line_scale", "color", "visibility", "justification", "start_x", "start_y", "style_name" ,"vertices", "scale_factor", "number_of_vertices", "type"],
+	"AcDbHatch": ["layer", "etype", "line_scale","color", "visibility",  "x", "y", "style_name", "fill_type", "seed_points", "pattern_scale", "pattern_angle", "gradient","pattern", "number_of_seed_points", "number_of_boundary_paths", "number_of_lines", "style", "associative"],
+	"AcDbSpline": ["layer", "etype","line_scale", "color", "visibility",  "control_points", "fit_points", "knot_values", "type", "degree_of_curve" , "number_of_fit_points", "number_of_control_points", "number_of_knots"],
+	"AcDbShape": ["layer", "etype", "line_scale","color", "visibility",  "x", "y", "style_name", "size", "rotation"],
+	"AcDbRay": ["layer", "etype", "line_scale","color", "visibility",  "start_x", "start_y", "unit_direction_x", "unit_direction_y"],
+	"AcDbTrace": ["layer", "etype", "line_scale", "color", "visibility", "corners"],
+	"AcDbVertex": ["layer", "etype","line_scale", "color", "visibility",  "x", "y", "start_width", "end_width", "curve_fit_tangent_direction", "type"],
+	// tables
+	"APPID": ["name"],
+	"DIMSTYLE": ["name", "dim_prefix", "dim_suffix", "arrow1", "arrow2", "dim_scale_overall", "arrow_size", "ext_line_offset", "dim_line_increment", "ext_line_extension", "dim_roundoff",
+		"dim_line_extension", "plus_tolerance", "text_height", "center_mark_size", "tick_size", "alt_scale_factor", "dim_scale_linear", "text_position_vertical", "tolerance_scale_factor",
+		"text_offset", "alt_round", "tolerance_display", "tolerance_limit", "text_inside_align", "text_outside_align", "ext_line1", "ext_line2", "text_pos_vert", "suppress_zero_inches/suppress_zero_feet",
+		"suppress_leading_zeros/suppress_trailing_zeros", "alt_enabled", "alt_precision", "dim_line_forced", "separate_arrow_blocks", "text_inside", "dim_line_inside",
+		"dim_line_color", "ext_line_color", "text_color", "angle_precision", "precision", "tolerance_precision", "alt_format", "alt_tolerance_precision", "angle_format", "fraction_type",
+		"dim_units", "decimal_separator", "text_movement", "text_pos_hor", "dim_line1", "dim_line2", "tolerance_pos_vert", "alt_suppress_leading_zeros/alt_suppress_trailing_zeros",
+		"suppress_leading_zeros/suppress_trailing_zeros", "suppress_zero_inches/suppress_zero_feet", "fit", "text_style", "dim_line_weight", "ext_line_weight"],
+	"LAYER": ["name", "status", "color_number", "line_type"],
+	"VIEW": ["hasUCS", "name", "center", "direction", "target_point", "height", "width", "lens_angle", "twist_angle", "type", "orthographic_type", "origin", "ucs_x", "ucs_y", "elevation"],
+	"VPORT": ["name", "lower_left_corner", "upper_right_corner", "center", "snap_base_point", "snap_spacing", "grid_spacing", "view_direction", "target_point", "height", "lens_length", "snap_rotation_angle", "twist_angle", "circle_sides", "orthographic_type", "origin", "ucs_x", "ucs_y", "elevation"],
+	"BLOCK_RECORD": ["name"],
+	"LTYPE": ["name", "description", "embedded_texts", "total_pattern_length", "x_offsets", "y_offsets", "scale_value", "pattern_lengths", "embedded_element_rotations", "number_of_elements", "embedded_element_type", "embedded_element_rotation_type"],
+	"STYLE": ["text_height", "name", "width_factor", "oblique_angle", "type", "text_type", "font_type"],
+	"UCS": ["name", "origin", "x_axis_direction", "y_axis_direction", "orthographic_origin", "orthographic_type", "elevation"],
+	// blocks
+	"blocks": ["name", "description", "layer", "base_point", "entities"]
+};
