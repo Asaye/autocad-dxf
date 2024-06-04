@@ -59,10 +59,11 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-
-- [KEYS](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json) and [CODES](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json) properties are added. These properties also have accessible JSON files with descriptions and AutoCAD dxf codes for each key used in ```tables```, ```blocks``` and ```entities``` variables discussed below.
-- More properties are added to ```DIMSTYLE``` property in ```tables```.
-
+- ```subclass``` property is added to all entities. It specifies the subclass marker as per the AutoCAD specification. It replaces the ```etype``` parameter in the earlier versions. The ```etype``` parameter still exists but defines the type of the entity as given [here](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)
+- ```color```, ```visibility```, ```line_type``` and ```text``` properties are added to parameter keys of ```filter``` function.
+- z-coordinates of entities are added to the existing x and y-coordinates.
+- the ```filter```, ```getCorners```, ```checkEccentric``` and ```checkConcentric``` functions accept additional parameter to specify the coordinate planes on which the geometrical operations will be performed as appropriate.
+- AcDbHelix, AcDbXline, AcDbRasterImage, AcDbLeader, AcDbBlockReference, AcDbModelerGeometry and AcDbFace are included for parsing.
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 
@@ -124,7 +125,7 @@ console.log(res.CODES); // list of all keys along with the descriptions and
 
 The following built-in functions can be called on the object of ```Entities``` class.
 
-#### &#x1F537; filter(criteria :object [, entities :Array]): 
+#### &#x1F537; filter(criteria :object [, entities :Array, plane :string]): 
 
 This function is used to filter entities based on a certain criteria. An array of entities can be those which are read from the DXF file or provided as a second parameter. It returns an array of filtered entities. 
 
@@ -134,11 +135,17 @@ Property | Type | Description
 ------ | ----- |  ---------
 [etype] | array | The set of entity types to be filtered. The possible values for the elements of the array are: <code>line</code>,<code>mline</code>,<code>circle</code>,<code>polyline</code>,<code>dimension</code>,<code>text</code>,<code>mtext</code>,<code>spline</code>,<code>ellipse</code>,<code>arc</code>. If not given, all entity types are considered.
 [layer] | array | An array of strings (layer names) to filter from.
-[between] | object | The bounding coordinates of the entities to be filtered. It has four optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code> and <code>ymax</code>. The default value for <code>xmin</code> and <code>ymin</code> is <code>-Infinity</code>. The default value for <code>xmax</code> and <code>ymax</code> is <code>Infinity</code>.
+[color] | string/number | A string (```ByBlock``` or ```ByLayer```) or a number from 0 to 256 representing AutoCAD color number.
+[visibility] | string | A string (```visible``` or ```invisible```).
+[line_type] | string | A string representing the line type.
+[text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (```&&``` or ```||```) to use while combining the filters. If the value of ```operator``` property is ```or``` or ```||```, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
+[between] | object | The bounding coordinates of the entities to be filtered. It has six optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code>,<code>ymax</code>,<code>zmin</code> and <code>zmax</code>. The default value for <code>xmin</code>, <code>ymin</code> and <code>zmin</code> is <code>-Infinity</code>. The default value for <code>xmax</code>, <code>ymax</code> and <code>zmax</code> is <code>Infinity</code>.
 [radius] | number | A radius value, if the <code>etype</code> propery contains <code>circle</code> or <code>arc</code>.
 [arc] | object | The degree of the arc and the unit of the arc angle if the <code>etype</code> propery contains <code>arc</code>. It contains two properties <code>angle</code> which is a number representing the arc angle and <code>unit</code> which is a string which can be either <code>radians</code> or <code>degrees</code>.
 [nsides] | object | A comparison for the number of sides of the entities to be filtered. It contains two properties <code>value</code> and <code>comparison</code>. The <code>value</code> property contains the numerical value of the number of sides to compare and its default value is 1. Whereas <code>comparison</code> is a string which can be one of <code>eq</code> for equal to, <code>gt</code> for greater than, <code>gte</code> for greater than or equal to (default value), <code>lt</code> for less than, <code>lte</code> for less than, <code>ne</code> for not equal to. This property is applicable for polygons (<code>AcDbPolyline</code>) only.
 
+The optional <code>entities</code> parameter can be part or the whole of ```entities``` property or a custom made list of entities (json) with keys from this [list](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json).
+The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
 
 ### Example
 Filter lines and texts on layers 'dims' and 'titles';
@@ -155,20 +162,36 @@ Filter lines and texts on layers 'dims' and 'titles';
 	console.log(filtered);
 ```
 
-#### &#x1F537; getCorners(entity :object): 
+### Example
+Filter all texts which contain the string "2nd" OR which end with the string "floor" (case insensitive);
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const filtered = res.filter({
+		text: {contains: "2nd", ends: "floor", operator: "or", i: true}
+	});
+	
+	console.log(filtered);
+```
+
+#### &#x1F537; getCorners(entity :object [, plane :string]): 
 
 This function is used to determine the coordinates of corner points (vertices with bends) of a polyline. Only polylines (<code>AcDbPolyline</code>) are supported. Hence, the passed parameter has to be a custom polyline object or a polyline element from the <code>entities</code> property of ```Entities``` class object. The function returns an array of corner points or <code>null</code> if the passed entity object is not supported. 
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
 
 
 ### Example
-Get corners of a custome polyline
+Get corners of a custom polyline
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
 	
 	const res = new Entities(data);
 	const polygon = {
-		etype: "AcDbPolyline",
+		etype: "LWPOLYLINE",
+		subclass: "AcDbPolyline",
 		number_of_vertices: 7,
 		type: "Closed",
 		vertices: [{ x: 1099.271933374087, y: 341.0072904353435 },
@@ -194,8 +217,9 @@ Get corners of a custome polyline
 	*/
 ```
 
-#### &#x1F537; checkConcentric(entity1 :object, entity2 :object): 
+#### &#x1F537; checkConcentric(entity1 :object, entity2 :object [, plane :string]): 
 This function is used to check if two circle objects ```entity1``` and ```entity2``` are concentric. 
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
 
 ### Example
 Check if the first and the second elements of the ```entities``` property of the object of ```Entities``` class are concentric circles.
@@ -209,10 +233,10 @@ Check if the first and the second elements of the ```entities``` property of the
 	console.log(areConcentric);
 ```
 
-#### &#x1F537; checkEccentric(entity1 :object, entity2 :object): 
+#### &#x1F537; checkEccentric(entity1 :object, entity2 :object [, plane :string]): 
 
 This function is used to check if two circle objects ```entity1``` and ```entity2``` are eccentric. 
-
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
 
 ### Example
 Check if the first and the second elements of the ```entities``` property of the object of ```Entities``` class are eccentric circles.
