@@ -1099,7 +1099,7 @@ const Entities = class {
 		} else if (code == "48") {
 			json.line_scale = parseFloat(value);
 		} else if (code == "50") {
-			if (json.subclass == "AcDbArc") {
+			if (json.subclass == "AcDbCircle") {
 				json.start_angle = parseFloat(value);   
 			} else if (json.subclass == "AcDbDimension") {
 				json.rotation = parseFloat(value);   
@@ -1113,7 +1113,7 @@ const Entities = class {
 				json.rotation = parseFloat(value);  
 			} 				 
 		} else if (code == "51") {
-			if (json.subclass == "AcDbArc") {
+			if (json.subclass == "AcDbCircle") {
 				json.end_angle = parseFloat(value);  
 			} 					  
 		} else if (code == "52") {
@@ -1567,7 +1567,6 @@ const Entities = class {
 	getAxes = (plane) => {
 		if (plane) {
 			plane = plane.trim();
-			console.log(plane);
 			if (plane != "x-y" && plane != "y-z" && plane != "z-x" && plane != "y-x" && plane != "z-y" && plane != "x-z") { // 3d plane to be added later
 				return [];
 			}
@@ -1586,8 +1585,6 @@ const Entities = class {
 			return;
 		}
 		let [ax1, ax2] = this.getAxes(plane);
-		console.log(ax1);
-		console.log(ax2);
 		if (plane && ax1 === undefined && ax2 === undefined) {
 			throw new Error(ErrorMessages.INCORRECT_PARAMS);
 			return;
@@ -1666,7 +1663,7 @@ const Entities = class {
 		const ymax = boundaries.ymax || Infinity;
 		const zmin = boundaries.zmin || -Infinity;
 		const zmax = boundaries.zmax || Infinity;
-		console.log(this.tolerance);
+		
 		if (item.subclass == "AcDbLine" || item.subclass == "AcDbRay" || item.subclass == "AcDbMline") {
 			return (item.start_x - xmin)*(item.start_x - xmax) <= this.tolerance && (item.start_y - ymin)*(item.start_y - ymax) <= this.tolerance &&
 			(item.start_z - zmin)*(item.start_z - zmax) <= this.tolerance && (item.end_x - xmin)*(item.end_x - xmax) <= this.tolerance &&
@@ -1718,7 +1715,7 @@ const Entities = class {
 		const x = Array.isArray(data) ? data[0] : data[ax1];
 		const y = Array.isArray(data) ? data[1] : data[ax2];
 		if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbSpline" || etype == "AcDbMLine" 
-			|| etype == "AcDbLine" || etype == "AcDbCircle" || etype == "AcDbArc" || etype == "AcDbEllipse") {
+			|| etype == "AcDbLine" || etype == "AcDbCircle" || etype == "AcDbEllipse") {
 			return false;
 		} else if (etype == "AcDbPolyline") {
 			const vertices = item.vertices;			
@@ -1796,6 +1793,192 @@ const Entities = class {
 			return Math.abs(xc1 - xc2) < this.tolerance && Math.abs(yc1 - yc2) < this.tolerance && Math.abs(r1 - r2) > this.tolerance;
 		}
 		return false;
+	}
+	
+	distance = (entity, entity2, plane) => {
+		if (typeof entity != "object" || typeof entity2 != "object") {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		let [ax1, ax2] = this.getAxes(plane);
+		if (plane && ax1 === undefined && ax2 === undefined) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		//array/point/circle/text/vertex/ellipse
+		let etype = entity.subclass;
+		let etype2 = entity2.subclass;
+		if (Array.isArray(entity) && Array.isArray(entity2)) {
+			return Math.sqrt((entity[0] - entity2[0])*(entity[0] - entity2[0]) + (entity[1] - entity2[1])*(entity[1] - entity2[1]));
+		} else if ((etype == "AcDbPoint" || etype == "AcDbCircle" || etype == "AcDbEllipse" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbVertex")  && 
+			(etype2 == "AcDbPoint" || etype2 == "AcDbCircle" || etype2 == "AcDbEllipse" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbVertex")) {
+				const x1 = entity[ax1];
+				const y1 = entity[ax2];
+				const x2 = entity2[ax1];
+				const y2 = entity2[ax2];
+			return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		} else if ((etype == "AcDbPoint" || etype == "AcDbCircle" || etype == "AcDbEllipse" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbVertex")  && 
+			Array.isArray(entity2)) {
+				const x1 = entity[ax1];
+				const y1 = entity[ax2];
+				const x2 = entity2[0];
+				const y2 = entity2[1];
+				return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		} else if ((etype2 == "AcDbPoint" || etype2 == "AcDbCircle" || etype2 == "AcDbEllipse" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbVertex")  && 
+			Array.isArray(entity)) {
+				const x1 = entity2[ax1];
+				const y1 = entity2[ax2];
+				const x2 = entity[0];
+				const y2 = entity[1];
+				return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		}  else if (Array.isArray(entity) && typeof entity2 == "object") {
+			etype = "point";
+			entity = {x: entity[0], y: entity[1]};
+		} else if (Array.isArray(entity2) && typeof entity == "object") {
+			etype = "point";
+			const temp = entity;
+			entity = {x: entity2[0], y: entity2[1]};
+			entity2 = temp;
+		}
+		
+		if (etype == "AcDbLine" || etype2 == "AcDbLine") {
+			if (etype == "AcDbLine") {
+				const temp = entity;
+				entity = entity2;
+				entity2 = temp;
+				etype = etype2.toLowerCase().replace("acdb", "");
+			} else {
+				etype = etype.toLowerCase().replace("acdb", "");
+			}
+			
+			const x1 = entity2[`start_${ax1}`];
+			const y1 = entity2[`start_${ax2}`];
+			const x2 = entity2[`end_${ax1}`];
+			const y2 = entity2[`end_${ax2}`];
+			const slope = (y2 - y1)/(x2 - x1);
+			
+			if (etype == "point" || etype == "circle" || etype == "ellipse" || etype == "text" || etype == "mtext" || etype == "vertex") {			
+				if (slope == Infinity || slope == -Infinity) {					
+					return Math.abs(entity[ax1] - x1);
+				} else {
+					const A = -slope;
+					const B = 1;
+					const C = slope*x1 - y1;
+					const D = Math.sqrt(A*A + 1);
+					return Math.abs(A*entity[ax1] + B*entity[ax2] + C)/D;
+				}				
+			} else if (etype == "line") { 
+				const x21 = entity[`start_${ax1}`];
+				const y21 = entity[`start_${ax2}`];
+				const x22 = entity[`end_${ax1}`];
+				const y22 = entity[`end_${ax2}`];
+				const slope2 = -(y22 - y21)/(x22 - x21);
+				
+				if (Math.abs(slope) == Infinity && Math.abs(slope2) >= 1/this.tolerance || 
+					Math.abs(slope2) == Infinity && Math.abs(slope) >= 1/this.tolerance ||
+					Math.abs(Math.abs(slope2) - Math.abs(slope)) <= this.tolerance) {
+						if (Math.abs(slope) == Infinity || Math.abs(slope2) == Infinity) {
+							return Math.abs(x21 - x1);
+						} else {
+							const A = -slope;
+							const B = 1;
+							const C = slope*x1 - y1;
+							const D = Math.sqrt(A*A + B*B);
+							return Math.abs(A*x21 + B*y21 + C)/D;
+						}
+				} else {
+					return undefined;
+				}
+			}				
+		} else if (etype == "AcDbPolyline" || etype2 == "AcDbPolyline") {
+			if (etype == "AcDbPolyline") {
+				const temp = entity;
+				entity = entity2;
+				entity2 = temp;
+				etype = etype2.toLowerCase().replace("acdb", "");
+			} else {
+				etype = etype.toLowerCase().replace("acdb", "");
+			}
+			
+			if (etype == "point" || etype == "circle" || etype == "ellipse" || etype == "text" || etype == "mtext" || etype == "vertex") {
+				const vertices = JSON.parse(JSON.stringify(entity2.vertices));
+				let x0 = vertices[0][ax1], y0 = vertices[0][ax2], x1, y1;
+				let dmin = Infinity;
+				if (entity.type == "Closed") vertices.push(vertices[0]);
+				const xref = entity[ax1], yref = entity[ax2];
+				for (let i = 1; i < vertices.length; i++) {
+					x1 = vertices[i][ax1];
+					y1 = vertices[i][ax2];
+					const slope = (y1 - y0)/(x1 - x0);
+					if (slope == Infinity || slope == -Infinity) {					
+						dmin = Math.min(dmin, Math.abs(entity2[ax1] - x1));
+					} else {
+						const A = -slope;
+						const B = 1;
+						const C = slope*x1 - y1;
+						const D = Math.sqrt(A*A + 1);
+						dmin = Math.min(dmin, Math.abs(A*xref + B*yref + C)/D);
+					}
+					x0 = x1;
+					y0 = y1;
+				}
+				return dmin;				
+			} 				
+		}
+	}
+	
+	length = (entity, plane) => {
+		if (typeof entity != "object") {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		let [ax1, ax2] = this.getAxes(plane);
+		if (plane && ax1 === undefined && ax2 === undefined) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		const etype = entity.subclass;
+		if (etype == "AcDbLine") {
+			const x1 = entity[`start_${ax1}`];
+			const y1 = entity[`start_${ax2}`];
+			const x2 = entity[`end_${ax1}`];
+			const y2 = entity[`end_${ax2}`];
+			return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		} else if (etype == "AcDbPolyline") {
+			const vertices = JSON.parse(JSON.stringify(entity.vertices));
+			if (entity.type == "Closed") vertices.push(vertices[0]);
+			let length = 0;
+			for (let i = 1; i < vertices.length; i++) {
+				const x1 = vertices[i - 1][`${ax1}`];
+				const y1 = vertices[i - 1][`${ax2}`];
+				const x2 = vertices[i][`${ax1}`];
+				const y2 = vertices[i][`${ax2}`];
+				length = length + Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+			}			
+			return length;
+		} else if (etype == "AcDbCircle") {
+			const start_angle = entity.start_angle;
+			const end_angle = entity.end_angle;
+			if (start_angle && end_angle) {
+				const d = Math.abs(start_angle - end_angle);
+				return 2*Math.PI*(entity.radius)*d/360;
+			} else {
+				return 2*Math.PI*entity.radius;
+			}
+		} else if (etype == "AcDbEllipse") {			
+			if (Math.abs(Math.abs(entity.start_angle - entity.end_angle) - 2*Math.PI) > this.tolerance) { // full ellipse
+				return;							
+			}
+			const dx = entity[`major_end_d${ax1}`];
+			const dy = entity[`major_end_d${ax2}`];
+			const ratio = entity.minorToMajor;
+			const a = Math.sqrt(dx*dx + dy*dy);
+			const b = ratio*a;
+			const h = (a - b)*(a - b)/((a + b)*(a + b));
+			
+			return Math.PI*(a + b)*(1 + 3*h/(10 + Math.sqrt(4 - 3*h)));  //Approximate
+		}
+		return;		
 	}
 }
 	

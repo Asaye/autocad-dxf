@@ -59,11 +59,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- ```subclass``` property is added to all entities. It specifies the subclass marker as per the AutoCAD specification. It replaces the ```etype``` parameter in the earlier versions. The ```etype``` parameter still exists but defines the type of the entity as given [here](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)
-- ```color```, ```visibility```, ```line_type``` and ```text``` properties are added to parameter keys of ```filter``` function.
-- z-coordinates of entities are added to the existing x and y-coordinates.
-- the ```filter```, ```getCorners```, ```checkEccentric``` and ```checkConcentric``` functions accept additional parameter to specify the coordinate planes on which the geometrical operations will be performed as appropriate.
-- AcDbHelix, AcDbXline, AcDbRasterImage, AcDbLeader, AcDbBlockReference, AcDbModelerGeometry and AcDbFace are included for parsing.
+- ```length``` and ```distance``` functions are added.
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 
@@ -145,7 +141,7 @@ Property | Type | Description
 [nsides] | object | A comparison for the number of sides of the entities to be filtered. It contains two properties <code>value</code> and <code>comparison</code>. The <code>value</code> property contains the numerical value of the number of sides to compare and its default value is 1. Whereas <code>comparison</code> is a string which can be one of <code>eq</code> for equal to, <code>gt</code> for greater than, <code>gte</code> for greater than or equal to (default value), <code>lt</code> for less than, <code>lte</code> for less than, <code>ne</code> for not equal to. This property is applicable for polygons (<code>AcDbPolyline</code>) only.
 
 The optional <code>entities</code> parameter can be part or the whole of ```entities``` property or a custom made list of entities (json) with keys from this [list](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json).
-The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
+The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
 Filter lines and texts on layers 'dims' and 'titles';
@@ -179,7 +175,7 @@ Filter all texts which contain the string "2nd" OR which end with the string "fl
 #### &#x1F537; getCorners(entity :object [, plane :string]): 
 
 This function is used to determine the coordinates of corner points (vertices with bends) of a polyline. Only polylines (<code>AcDbPolyline</code>) are supported. Hence, the passed parameter has to be a custom polyline object or a polyline element from the <code>entities</code> property of ```Entities``` class object. The function returns an array of corner points or <code>null</code> if the passed entity object is not supported. 
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 
 ### Example
@@ -219,7 +215,7 @@ Get corners of a custom polyline
 
 #### &#x1F537; checkConcentric(entity1 :object, entity2 :object [, plane :string]): 
 This function is used to check if two circle objects ```entity1``` and ```entity2``` are concentric. 
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
 Check if the first and the second elements of the ```entities``` property of the object of ```Entities``` class are concentric circles.
@@ -232,11 +228,10 @@ Check if the first and the second elements of the ```entities``` property of the
 	
 	console.log(areConcentric);
 ```
-
 #### &#x1F537; checkEccentric(entity1 :object, entity2 :object [, plane :string]): 
 
 This function is used to check if two circle objects ```entity1``` and ```entity2``` are eccentric. 
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` is used.
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
 Check if the first and the second elements of the ```entities``` property of the object of ```Entities``` class are eccentric circles.
@@ -250,6 +245,86 @@ Check if the first and the second elements of the ```entities``` property of the
 	console.log(areEccentric);
 ```
 
+#### &#x1F537; distance(entity1 :object, entity2 :object [, plane :string]): 
+
+This function is used to determine the shortest distance between two entities: ```entity1``` and ```entity2``` as described below. Both or one of these entities can be a one-dimensional array with a format of: ```[x, y]```.
++ If both  ```entity1``` and ```entity2``` are points (```AcDbPoint```) or texts(```AcDbText/AcDbMText```) or vertices(```AcDbVertex```) or arrays  or any combination of these, the distance between the two points will be returned.
++ If both  ```entity1``` and ```entity2``` are circles or arcs or ellipses or any combination of these, the distance between the centers will be returned.
++ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a line, the perpendicular distance between the point/center to (extension of) the line will be returned.
++ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a polyline, the perpendicular distance between the point/center to (extension of) the closest edge will be returned.
++ If both  ```entity1``` or ```entity2``` are lines which are parallel, the perpendicular distance between (extensions of) the lines will be returned. If the lines are not parallel, ```undefined``` is returned.
++ If the passed parameters are none of the above combinations, ```undefined``` is returned.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the closest distance between a circle and a line.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = {
+		etype: 'LINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbLine',
+		start_x: 76.48716497852402,
+		start_y: -120.4229218048302,
+		start_z: 0,
+		end_x: 888.3252621940712,
+		end_y: -29.22024472584008,
+		end_z: 0
+	};
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const distance = res.distance(line, circle);
+	
+	console.log(distance);  // prints 575.4826584729997
+```
+
+#### &#x1F537; length(entity :object [, plane :string]): 
+
+This function is used to determine the length of an entity as described below. 
++ If ```entity``` is a line/circle/arc, the length/circumference/arc length of the line/circle/arc will be returned.
++ If ```entity``` is a polyline, the sum of the lengths of each sides of the polyline will be returned.
++ If ```entity``` is a full ellipse, an approximate circumference of the ellipse using Ramanujan's second formula will be returned.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the circumference of a circle.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const length = res.length(circle);
+	
+	console.log(length);  // prints 1037.2865715091436
+```
 
 
 
