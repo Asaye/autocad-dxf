@@ -59,7 +59,8 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- ```length``` and ```distance``` functions are added.
+- Former ```start_angle``` and ```end_angle``` properties of ellipses (```AcDbEllipse```) have now become ```start_parameter``` and ```end_parameter``` respectively to mark that they donote the parametric angles. The ```start_angle``` and ```end_angle``` properties still exist for ellipses but they now represent the true start and end angles in degrees.
+- ```intersection``` and ```closest``` functions are added.
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 
@@ -69,7 +70,7 @@ const res = new Entities(data, tolerance);
 ```data``` - is a string data which is read from the dxf file. This is an optional parameter. If not provided, user defined data can be used to call the built-in functions via the ```Entities``` class object. The user defined data should be as per the custom keys defined in this module. The list of these custom keys can be accessed via the ```KEYS``` property,  
 ```tolerance``` - is a tolerable numerical difference between two numbers to be considered equal. This is an optional parameter. The default value is 0.0001.
 
-### Get all parsed data
+### Get all parsed drawing entities
 
 The ```entities``` property holds the parsed data in JSON format.
 
@@ -105,7 +106,7 @@ console.log(res.blocks);
 ``` 
 ### Custom keys 
 
-For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` [link](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json) property while the corresponding AutoCAD codes can be referred via the ```CODES``` [link](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)property.
+For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json)) property while the corresponding AutoCAD codes can be referred via the ```CODES``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)) property.
 ```
 const Entities = require("autocad-dxf");
 const data = "DATA_FROM_DXF_FILE";
@@ -134,7 +135,7 @@ Property | Type | Description
 [color] | string/number | A string (```ByBlock``` or ```ByLayer```) or a number from 0 to 256 representing AutoCAD color number.
 [visibility] | string | A string (```visible``` or ```invisible```).
 [line_type] | string | A string representing the line type.
-[text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (```&&``` or ```||```) to use while combining the filters. If the value of ```operator``` property is ```or``` or ```||```, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
+[text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (<code>&&</code> or <code>\|\|</code>) to use while combining the filters. If the value of ```operator``` property is ```or``` or <code>\|\|</code>, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
 [between] | object | The bounding coordinates of the entities to be filtered. It has six optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code>,<code>ymax</code>,<code>zmin</code> and <code>zmax</code>. The default value for <code>xmin</code>, <code>ymin</code> and <code>zmin</code> is <code>-Infinity</code>. The default value for <code>xmax</code>, <code>ymax</code> and <code>zmax</code> is <code>Infinity</code>.
 [radius] | number | A radius value, if the <code>etype</code> propery contains <code>circle</code> or <code>arc</code>.
 [arc] | object | The degree of the arc and the unit of the arc angle if the <code>etype</code> propery contains <code>arc</code>. It contains two properties <code>angle</code> which is a number representing the arc angle and <code>unit</code> which is a string which can be either <code>radians</code> or <code>degrees</code>.
@@ -326,6 +327,81 @@ Get the circumference of a circle.
 	console.log(length);  // prints 1037.2865715091436
 ```
 
+#### &#x1F537; intersection(entity1 :object, entity2 :object [, plane :string]): 
+
+This function is used to determine the intersection point/s of two entities: ```entity1``` and ```entity2```. The return type is an array of intersection points with each element of the form ```{x: x_value, y: y_value}```. If there is no intersection point, an empty array will be returned. The ```entity1``` and ```entity2``` parameters can be a combination of (both ways): 
++ ```line``` and ```line/polyline/circle/arc/ellipse```.
++ ```circle/arc``` and ```polyline/circle/arc```.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the intersection points of a circle and a line.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = {
+		etype: 'LINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbLine',
+		start_x: 13.51291280096347,
+		start_y: 440.1406350864196,
+		start_z: 0,
+		end_x: 825.3510100165108,
+		end_y: 531.3433121654098,
+		end_z: 0
+	};
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const intersection = res.intersection(line, circle);
+	
+	console.log(intersection);  
+	/* The output is: (giving the two intersection points)
+	    [
+           { x: 658.8050488328336, y: 512.6333777970402 },
+           { x: 331.47271794408545, y: 475.8605471378831 }
+        ] 
+	*/
+```
+
+#### &#x1F537; closest(entity :object, [etype :array], [mode :string], [list :array]): 
+
+This function is used to obtain the closest entity to a given ```entity``` which is passed as the first parameter. It is applicable for points (```AcDbPoint```), circles(```AcDbCircle```), ellipses (```AcDbEllipse```), texts (```AcDbText``` or ```AcDbMText```), dimension lines (```AcDbDimension```), lines (```AcDbLine```), polylines (```AcDbPolyline```) and splines [where control points are used] (```AcDbSpline```).
+The optional second parameter, ```etype```, is an array parameter which can be used to specify the list of possible types of entities which need to be considered while obtaining the closest entity. The possible values for the elements of ```etype``` array are: <code>point</code>, <code>line</code>, <code>mline</code>, <code>circle</code>, <code>polyline</code>, <code>dimension</code>, <code>text</code>, <code>mtext</code>, <code>spline</code>, <code>ellipse</code>, <code>arc</code>. If this parameter is not provided, any type of entity which is closest to the given ```entity``` parameter will be returned. 
+The optional third parameter is used to define the mode of distance calculation for the determination of the closest entity. The possible values are:
++ ```center``` - (default value) - to determine the closest entity based on distances from a center point, (for lines, splines and polylines, end points or corner points to the center of the given entity will be determined)
++ ```end``` - to determine the closest entity based on distances from end point/s, 
++ ```corner``` - to determine the closest entity based on distances from corner points and 
++ ```perpendicular``` - to determine the closest entity based on perpendicular distances  (for lines, splines and polylines, end points or corner points to the given entity in terms of perpendicular distance will be determined)
+ 
+The optional fourth parameter is used to define the set of entities from which the closest entity is sought from. It should be an array of entities. If not given, the ```entities``` property ( which contains the list of entities collected from the dxf text) of the object of ```Entities``` class will be used. 
+
+### Example
+Get the closest all types of texts to one of the ends of a given line (say the line is the first element of ```entities``` array).
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = res.entities[0];
+	
+	const closest = res.closest(line, ["text", "mtext"], "end");
+	
+	console.log(closest);  
+```
 
 
 ## Issues or suggestions?

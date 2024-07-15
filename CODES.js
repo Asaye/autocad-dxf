@@ -42,7 +42,7 @@ module.exports = {
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"      // subclass marker, AcDbCircle
+		"100": "subclass/specific_type"      // subclass marker (AcDbCircle)/the specific type of the circle (AcDbArc)	
 	},
 	"AcDbDimension": {
 		"0": "etype",                        // type of entity, DIMENSION		
@@ -89,8 +89,10 @@ module.exports = {
 		"30": "z",             // the z coordinate of the center
 		"31": "major_end_dz",  // the delta Z of the end point of the major axis w.r.t the center 
 		"40": "minorToMajor",  // the length ratio of the minor axis to the major axis
-		"41": "start_angle",   // the start angle of the ellipse, 0 for full ellipse
-		"42": "end_angle",     // the end angle of the ellipse, 2*PI for full ellipse
+		"41": "start_parameter",   // the parameteric angle of the start point of the ellipse, 0 for full ellipse
+		"42": "end_parameter",     // the parameteric angle of the end point of the ellipse, 2*PI for full ellipse
+		"41a": "start_angle",  // the start angle of the ellipse, 0 for full ellipse
+		"42a": "end_angle",    // the end angle of the ellipse, 360 for full ellipse
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer

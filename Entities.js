@@ -612,7 +612,7 @@ const Entities = class {
 				return COUNT + 2;
 			}
 					
-			if (code == "0" && (!json || (json.subclass != "AcDb3dPolyline" && json.etype != "SEQEND"))) {					
+			if (code == "0" && (!json || (json.subclass && json.subclass != "AcDb3dPolyline" && json.etype != "SEQEND"))) {					
 				if (json) this.entities.push(json);
 				json = {};
 				this.insertEntity(code, value, json);
@@ -620,6 +620,9 @@ const Entities = class {
 				if (json) this.entities.push(json);
 				json = {};
 				json2 = undefined;
+				while (array[COUNT + 2].trim() != "0") {
+					COUNT = COUNT + 2;
+				}				
 				//this.insertEntity(code, value, json);
 			} else if (code == "0" && json && json.subclass == "AcDb3dPolyline") {
 				if (!json.vertices) json.vertices = [];
@@ -1048,7 +1051,10 @@ const Entities = class {
 			} 
 		} else if (code == "41") {
 			if (json.subclass == "AcDbEllipse") {
-				json.start_angle = parseFloat(value);  
+				json.start_parameter = parseFloat(value);
+				if (!isNaN(json.end_parameter)) {
+					this.getEllipseAngles(json);
+				}
 			} else if (json.subclass == "AcDbText") {
 				json.width = parseFloat(value);  
 			} else if (json.subclass == "AcDbVertex") {
@@ -1069,7 +1075,10 @@ const Entities = class {
 			} 
 		} else if (code == "42") {
 			if (json.subclass == "AcDbEllipse") {
-				json.end_angle = parseFloat(value);  
+				json.end_parameter = parseFloat(value);
+				if (!isNaN(json.start_parameter)) {
+					this.getEllipseAngles(json);
+				}
 			} else if (json.subclass == "AcDbText") {
 				json.character_width = parseFloat(value);  
 			} else if (json.subclass == "AcDbDimension") {
@@ -1493,7 +1502,7 @@ const Entities = class {
 			return;
 		}
 		return entities.filter((item) => 
-			(!criteria.subclass || !Array.isArray(criteria.subclass) || criteria.subclass.filter((en) => ("acdb" + en) == item.subclass.toLowerCase()).length > 0) &&
+			(!criteria.subclass || !Array.isArray(criteria.subclass) || criteria.subclass.filter((en) => (("acdb" + en) == item.subclass.toLowerCase()) || (item.specific_type && ("acdb" + en) == item.specific_type.toLowerCase())).length > 0) &&
 			(!criteria.layer || !Array.isArray(criteria.layer) || criteria.layer.filter((la) => la == item.layer).length > 0) && 
 			(!criteria.between || this.checkBetween(criteria.between, item)) &&
 			(!criteria.radius || criteria.radius == item.radius) &&
@@ -1714,7 +1723,7 @@ const Entities = class {
 		const etype = item.subclass;
 		const x = Array.isArray(data) ? data[0] : data[ax1];
 		const y = Array.isArray(data) ? data[1] : data[ax2];
-		if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbSpline" || etype == "AcDbMLine" 
+		if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbSpline" || etype == "AcDbMline" 
 			|| etype == "AcDbLine" || etype == "AcDbCircle" || etype == "AcDbEllipse") {
 			return false;
 		} else if (etype == "AcDbPolyline") {
@@ -1960,7 +1969,12 @@ const Entities = class {
 			const start_angle = entity.start_angle;
 			const end_angle = entity.end_angle;
 			if (start_angle && end_angle) {
-				const d = Math.abs(start_angle - end_angle);
+				let d;
+				if (start_angle < end_angle) {
+					d = Math.abs(start_angle - end_angle);
+				} else {
+					d = 360 - Math.abs(start_angle - end_angle);
+				}				
 				return 2*Math.PI*(entity.radius)*d/360;
 			} else {
 				return 2*Math.PI*entity.radius;
@@ -1979,6 +1993,1436 @@ const Entities = class {
 			return Math.PI*(a + b)*(1 + 3*h/(10 + Math.sqrt(4 - 3*h)));  //Approximate
 		}
 		return;		
+	}
+	
+	vLineIntersection = (x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2) => {
+		const m1 = (y12 - y11)/(x12 - x11);
+		const m2 = (y22 - y21)/(x22 - x21);
+		
+		if (Math.abs(m1) == Infinity && Math.abs(m2) != Infinity) {
+			const y = m2*(x11 - x22) + y22;
+			if ((y - y11)*(y - y12) < this.tolerance) {
+				let json = {};
+				json[`${ax1}`] = x11;
+				json[`${ax2}`] = y;
+				return [json];
+			}
+			return [];
+		} else if (Math.abs(m1) != Infinity && Math.abs(m2) == Infinity) {
+			const y = m1*(x22 - x12) + y12;
+			if ((y - y21)*(y - y22) < this.tolerance) {
+				let json = {};
+				json[`${ax1}`] = x22;
+				json[`${ax2}`] = y;
+				return [json];
+			}
+			return [];
+		} 
+		return [];
+	}
+	
+	intersection = (entity1, entity2, plane) => {
+		if (typeof entity1 != "object" || typeof entity2 != "object" || Array.isArray(entity1) || Array.isArray(entity2)) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		let [ax1, ax2] = this.getAxes(plane);
+		if (plane && ax1 === undefined && ax2 === undefined) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}		
+	
+		const etype1 = entity1.subclass;		
+		const etype2 = entity2.subclass;
+	
+		if (etype1 == "AcDbLine" && etype2 == "AcDbLine") {
+			const x11 = entity1[`start_${ax1}`];
+			const y11 = entity1[`start_${ax2}`];
+			const x12 = entity1[`end_${ax1}`];
+			const y12 = entity1[`end_${ax2}`];
+			const x21 = entity2[`start_${ax1}`];
+			const y21 = entity2[`start_${ax2}`];
+			const x22 = entity2[`end_${ax1}`];
+			const y22 = entity2[`end_${ax2}`];
+			
+			const m1 = (y12 - y11)/(x12 - x11);
+			const m2 = (y22 - y21)/(x22 - x21);
+			
+			if (Math.abs(m1) == Infinity || Math.abs(m2) == Infinity) {
+				return this.vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2);
+			}		
+			
+			if (Math.abs((Math.abs(m1) - Math.abs(m2))) < this.tolerance) return [];
+			const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
+			const y = m1*x + (-m1*x11 + y11);
+			const isCrossing = (x - x11)*(x - x12) < this.tolerance && (x - x21)*(x - x22) < this.tolerance && 
+			            (y - y11)*(y - y12) < this.tolerance && (y - y21)*(y - y22) < this.tolerance;
+			
+			if (isCrossing) {
+				let json = {};
+				json[`${ax1}`] = x;
+				json[`${ax2}`] = y;
+				return [json];
+			} else {
+				return [];
+			}
+		} else if ((etype1 == "AcDbLine" && etype2 == "AcDbPolyline") || (etype2 == "AcDbLine"  && etype1 == "AcDbPolyline")) {
+			if (etype1 == "AcDbPolyline") {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}
+			const x11 = entity1[`start_${ax1}`];
+			const y11 = entity1[`start_${ax2}`];
+			const x12 = entity1[`end_${ax1}`];
+			const y12 = entity1[`end_${ax2}`];
+			const m1 = (y12 - y11)/(x12 - x11);
+			const vertices = JSON.parse(JSON.stringify(entity2.vertices));
+			
+			if (entity2.type == "Closed") {
+				vertices.push(vertices[0]);
+			}
+			
+			let points = [];
+			for (let i = 1; i < vertices.length; i++) {
+				const x21 = vertices[i - 1][`${ax1}`];
+				const y21 = vertices[i - 1][`${ax2}`];
+				const x22 = vertices[i][`${ax1}`];
+				const y22 = vertices[i][`${ax2}`];				
+				const m2 = (y22 - y21)/(x22 - x21);		
+				const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
+				const y = m1*x + (-m1*x11 + y11);
+				
+				if (Math.abs(m1) == Infinity || Math.abs(m2) == Infinity) {
+					const intersection = this.vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2);
+					if (intersection.length > 0) {						
+						points.push(intersection[0]);
+					}
+				} else {
+					const temp = (x - x11)*(x - x12) < this.tolerance && (x - x21)*(x - x22) < this.tolerance && 
+					   (y - y11)*(y - y12) < this.tolerance && (y - y21)*(y - y22) < this.tolerance;
+					if (temp) {
+						let json = {};
+						json[`${ax1}`] = x;
+						json[`${ax2}`] = y;
+						points.push(json);
+					}
+				}
+				
+			}
+			
+			return points;			
+		} else if ((etype1 == "AcDbLine" && etype2 == "AcDbCircle" && entity2.etype != "ARC") || 
+			(etype2 == "AcDbLine" && etype1 == "AcDbCircle"  && entity1.etype != "ARC")) {
+			if (etype1 == "AcDbCircle") {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}
+			const x0 = entity2[`${ax1}`];
+			const y0 = entity2[`${ax2}`];
+			const radius = entity2.radius;
+			const x1 = entity1[`start_${ax1}`];
+			const y1 = entity1[`start_${ax2}`];
+			const x2 = entity1[`end_${ax1}`];
+			const y2 = entity1[`end_${ax2}`];
+			const m = (y2 - y1)/(x2 - x1);
+			
+			if (Math.abs(m) == Infinity) {
+				const det = radius*radius - (x1 - x0)*(x1 - x0);
+				if (det < 0) {
+					return [];
+				} else if (det == 0) {
+					if ((y0 - y1)*(y0 - y2) > this.tolerance) return [];
+					let json = {};
+					json[`${ax1}`] = x1;
+					json[`${ax2}`] = y0;
+					return [json];
+				} else {
+					let ysol1 = y0 - Math.sqrt(det);
+					let ysol2 = y0 + Math.sqrt(det);
+					let points = [];
+					if ((ysol1 - y1)*(ysol1 - y2) < this.tolerance) {
+						let json1 = {};
+						json1[`${ax1}`] = x1;
+						json1[`${ax2}`] = ysol1;
+						points.push(json1);
+					}
+					if ((ysol2 - y1)*(ysol2 - y2) < this.tolerance) {
+						let json2 = {};
+						json2[`${ax1}`] = x1;
+						json2[`${ax2}`] = ysol2;
+						points.push(json2);
+					}
+					return points;
+				}
+			}
+			
+			const b = y1 - m*x1;
+			const A = m*m + 1;
+			const B = 2*(m*(b - y0) - x0);
+			const C = x0*x0 + (b - y0)*(b - y0) - radius*radius;
+			const det = B*B - 4*A*C;
+			let points = [];
+			if (det < 0) {
+				return [];
+			} else if (det == 0) {
+				const sol1 = (-B)/(2*A);
+				const ysol1 = m*sol1 + b;
+				if (((sol1 - x1)*(sol1 - x2) > this.tolerance) || ((ysol1 - y1)*(ysol1 - y2) > this.tolerance)) return [];
+				let json = {};
+				json[`${ax1}`] = sol1;
+				json[`${ax2}`] = ysol1;
+				points.push(json);
+			} else {
+				const sol1 = (-B + Math.sqrt(det))/(2*A);
+				const sol2 = (-B - Math.sqrt(det))/(2*A);
+				const ysol1 = m*sol1 + b;
+				const ysol2 = m*sol2 + b;
+				
+				const isCrossing =  ((sol1 - x1)*(sol1 - x2) < this.tolerance && (ysol1 - y1)*(ysol1 - y2) < this.tolerance) ||
+					   ((sol2 - x1)*(sol2 - x2) < this.tolerance && (ysol2 - y1)*(ysol2 - y2) < this.tolerance);
+				
+								
+				if (isCrossing) {
+					if ((sol1 - x1)*(sol1 - x2) < this.tolerance && (ysol1 - y1)*(ysol1 - y2) < this.tolerance) {
+						let json1 = {};
+						json1[`${ax1}`] = sol1;
+						json1[`${ax2}`] = ysol1;
+						points.push(json1);
+					}
+					if ((sol2 - x1)*(sol2 - x2) < this.tolerance && (ysol2 - y1)*(ysol2 - y2) < this.tolerance) {
+						let json2 = {};
+						json2[`${ax1}`] = sol2;
+						json2[`${ax2}`] = ysol2;
+						points.push(json2);
+					}
+				} 
+				
+			}
+			return points;
+		} else if ((etype1 == "AcDbLine" && etype2 == "AcDbCircle") || (etype2 == "AcDbLine" && etype1 == "AcDbCircle")) {
+			if (etype1 == "AcDbCircle") {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}
+			const xc = entity2[`${ax1}`];
+			const yc = entity2[`${ax2}`];
+			const radius = entity2.radius;
+			const x1 = entity1[`start_${ax1}`];
+			const y1 = entity1[`start_${ax2}`];
+			const x2 = entity1[`end_${ax1}`];
+			const y2 = entity1[`end_${ax2}`];
+			let m = (y2 - y1)/(x2 - x1);
+			let sol1, sol2, ysol1, ysol2;
+			let points = [];
+			
+			if (Math.abs(m) == Infinity) {
+				const det = radius*radius - (x1 - xc)*(x1 - xc);
+				
+				if (det < 0) {
+					return [];
+				} else if (det == 0) {				
+					sol1 = x1;
+					ysol1 = yc;
+				} else {
+					ysol1 = yc - Math.sqrt(det);
+					ysol2 = yc + Math.sqrt(det);
+					let points = [];
+					if ((ysol1 - y1)*(ysol1 - y2) < this.tolerance) {						
+						sol1 = x1;
+					}
+					if ((ysol2 - y1)*(ysol2 - y2) < this.tolerance) {						
+						sol2 = x1;
+					}
+				}
+			} else {			
+				const b = y1 - m*x1;
+				const A = m*m + 1;
+				const B = 2*(m*(b - yc) - xc);
+				const C = xc*xc + (b - yc)*(b - yc) - radius*radius;
+				const det = B*B - 4*A*C;
+				
+				if (det < this.tolerance) {
+					return [];
+				} else {
+					sol1 = (-B + Math.sqrt(det))/(2*A);
+					sol2 = (-B - Math.sqrt(det))/(2*A);
+					ysol1 = m*sol1 + b;
+					ysol2 = m*sol2 + b;
+				}
+			}
+			let sa = entity2.start_angle*Math.PI/180;
+			let ea = entity2.end_angle*Math.PI/180;
+					
+			if (sol1 && ysol1) {
+				//let ang1 = Math.atan2((ysol1 - yc),(sol1 - xc));
+				let ang1 = Math.abs(Math.atan((ysol1 - yc)/(sol1 - xc)));
+				const isCrossing1 =  ((sol1 - x1)*(sol1 - x2) < this.tolerance && (ysol1 - y1)*(ysol1 - y2) < this.tolerance);
+				if (ysol1 > yc && sol1 < xc) {
+				 	ang1 = Math.PI - ang1;
+				} else if (ysol1 < yc && sol1 < xc) {
+					ang1 = Math.PI + ang1;
+				} else if (ysol1 < yc && sol1 > xc) {
+					ang1 = 2*Math.PI - ang1;
+				} 
+				if (isCrossing1 && ((sa < ea && ((ang1 - sa)*(ang1 - ea) < this.tolerance)) || (sa > ea && ((ang1 - sa)*(ang1 - ea) > this.tolerance)))) {
+					let json1 = {};
+					json1[`${ax1}`] = sol1;
+					json1[`${ax2}`] = ysol1;
+					points.push(json1);
+				}
+			}
+			
+			if (sol2 && ysol2) {
+				//let ang2 = Math.atan2((ysol2 - yc),(sol2 - xc));
+				let ang2 = Math.abs(Math.atan((ysol2 - yc)/(sol2 - xc)));
+				const isCrossing2 =  ((sol2 - x1)*(sol2 - x2) < this.tolerance && (ysol2 - y1)*(ysol2 - y2) < this.tolerance);
+				if (ysol2 > yc && sol2 < xc) {
+					ang2 = Math.PI - ang2;
+				} else if (ysol2 < yc && sol2 < xc) {
+					ang2 = Math.PI + ang2;
+				} else if (ysol2 < yc && sol2 > xc) {
+					ang2 = 2*Math.PI - ang2;
+				} 
+				if (isCrossing2 && ((sa < ea && ((ang2 - sa)*(ang2 - ea) < this.tolerance)) || (sa > ea && ((ang2 - sa)*(ang2 - ea) > this.tolerance)))) {
+					let json2 = {};
+					json2[`${ax1}`] = sol2;
+					json2[`${ax2}`] = ysol2;
+					points.push(json2);
+				}
+			}
+			
+			return points;	
+		} else if ((etype1 == "AcDbLine" && etype2 == "AcDbEllipse") || (etype2 == "AcDbLine" &&	etype1 == "AcDbEllipse")) {
+			if (etype1 == "AcDbEllipse") {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}
+			
+			const xc = entity2[`${ax1}`];
+			const yc = entity2[`${ax2}`];
+			const radius = entity2.radius;
+			const x1 = entity1[`start_${ax1}`];
+			const y1 = entity1[`start_${ax2}`];
+			const x2 = entity1[`end_${ax1}`];
+			const y2 = entity1[`end_${ax2}`];
+			let m = (y2 - y1)/(x2 - x1);
+			let sol1, sol2, ysol1, ysol2;
+			let points = [];
+			
+			const dx = entity2[`major_end_d${ax1}`];
+			const dy = entity2[`major_end_d${ax2}`];
+			const ratio = entity2.minorToMajor;
+			const a = Math.sqrt(dx*dx + dy*dy);
+			const b = ratio*a;
+			const theta = Math.atan2(dy, dx);
+			const A = Math.pow(a*Math.sin(theta), 2) + Math.pow(b*Math.cos(theta), 2);
+			const B = 2*(b*b - a*a)*Math.sin(theta)*Math.cos(theta);
+			const C = Math.pow(a*Math.cos(theta), 2) + Math.pow(b*Math.sin(theta), 2);
+			const D = -2*A*xc - B*yc;
+			const E = -B*xc - 2*C*yc;
+			const F = A*xc*xc + B*xc*yc + C*yc*yc - a*a*b*b;
+			let sa = entity2.start_angle;
+			let ea = entity2.end_angle;	
+			
+			if (Math.abs(m) == Infinity) {
+				const det = (B*x1 + E)*(B*x1 + E) - 4*C*(A*x1*x1 + D*x1 + F);				
+				if (det < 0) {
+					return [];
+				} else if (det == 0) {				
+					sol1 = x1;
+					ysol1 = -(B*x1 + E)/(2*C);
+				} else {
+					ysol1 = -(B*x1 + E - Math.sqrt(det))/(2*C);
+					ysol2 = -(B*x1 + E + Math.sqrt(det))/(2*C);
+					
+					if ((ysol1 - y1)*(ysol1 - y2) < this.tolerance) {						
+						sol1 = x1;
+					}
+					if ((ysol2 - y1)*(ysol2 - y2) < this.tolerance) {						
+						sol2 = x1;
+					}
+				}
+			} else {
+				const y_int = -m*x1 + y1;
+				const AA = (A + B*m + C*m*m);
+				const BB = (B*y_int + 2*C*m*y_int + D + E*m);
+				const CC = (C*y_int*y_int + E*y_int + F);
+				const det = BB*BB - 4*AA*CC;
+				
+				if (det <= this.tolerance) {							
+					return [];
+				} else {
+					const b = y1 - m*x1;						
+					sol1 = (-BB + Math.sqrt(det))/(2*AA);
+					sol2 = (-BB - Math.sqrt(det))/(2*AA);						
+					ysol1 = m*sol1 + b;
+					ysol2 = m*sol2 + b;	
+				}
+			}
+			
+			if (Math.abs(Math.abs(entity2.start_parameter - entity2.end_parameter) - 2*Math.PI) < this.tolerance) { // full ellipse
+				if ((sol1 - x1)*(sol1 - x2) < this.tolerance && (ysol1 - y1)*(ysol1 - y2) < this.tolerance) {
+					let json1 = {};
+					json1[`${ax1}`] = sol1;
+					json1[`${ax2}`] = ysol1;
+					points.push(json1);
+				}
+				if ((sol2 - x1)*(sol2 - x2) < this.tolerance && (ysol2 - y1)*(ysol2 - y2) < this.tolerance) {
+					let json2 = {};
+					json2[`${ax1}`] = sol2;
+					json2[`${ax2}`] = ysol2;
+					points.push(json2);
+				}
+			} else {
+				sa = sa*Math.PI/180;
+				ea = ea*Math.PI/180;
+				if (sol1 && ysol1) {
+					let ang1 = Math.abs(Math.atan((ysol1 - yc)/(sol1 - xc)));
+					const isCrossing1 =  ((sol1 - x1)*(sol1 - x2) < this.tolerance && (ysol1 - y1)*(ysol1 - y2) < this.tolerance);
+					if (ysol1 > yc && sol1 < xc) {
+						ang1 = Math.PI - ang1;
+					} else if (ysol1 < yc && sol1 < xc) {
+						ang1 = Math.PI + ang1;
+					} else if (ysol1 < yc && sol1 > xc) {
+						ang1 = 2*Math.PI - ang1;
+					}
+					if (isCrossing1 && ((sa < ea && ((ang1 - sa)*(ang1 - ea) < this.tolerance)) || (sa > ea && ((ang1 - sa)*(ang1 - ea) > this.tolerance)))) {
+						let json1 = {};
+						json1[`${ax1}`] = sol1;
+						json1[`${ax2}`] = ysol1;
+						points.push(json1);
+					}
+				}
+				
+				if (sol2 && ysol2) {
+					let ang2 = Math.abs(Math.atan((ysol2 - yc)/(sol2 - xc)));
+					const isCrossing2 =  ((sol2 - x1)*(sol2 - x2) < this.tolerance && (ysol2 - y1)*(ysol2 - y2) < this.tolerance);
+					if (ysol2 > yc && sol2 < xc) {
+						ang2 = Math.PI - ang2;
+					} else if (ysol2 < yc && sol2 < xc) {
+						ang2 = Math.PI + ang2;
+					} else if (ysol2 < yc && sol2 > xc) {
+						ang2 = 2*Math.PI - ang2;
+					}
+					if (isCrossing2 && ((sa < ea && ((ang2 - sa)*(ang2 - ea) < this.tolerance)) || (sa > ea && ((ang2 - sa)*(ang2 - ea) > this.tolerance)))) {
+						let json2 = {};
+						json2[`${ax1}`] = sol2;
+						json2[`${ax2}`] = ysol2;
+						points.push(json2);
+					}
+				}
+			}
+			return points;
+		} else if ((etype1 == "AcDbPolyline" &&	etype2 == "AcDbCircle") || (etype2 == "AcDbPolyline" &&	etype1 == "AcDbCircle")) {	
+			if ((etype2 == "AcDbPolyline" &&	etype1 == "AcDbCircle")) {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}			
+			const vertices = JSON.parse(JSON.stringify(entity1.vertices));			
+			if (entity2.type == "Closed") {
+				vertices.push(vertices[0]);
+			}
+			let points = [];
+			let x0 = vertices[0][`${ax1}`], x1;
+			let y0 = vertices[0][`${ax2}`], y1;
+			
+			for (let i = 1; i < vertices.length; i++) {
+				x1 = vertices[i][`${ax1}`];
+				y1 = vertices[i][`${ax2}`];
+				let json = {subclass: "AcDbLine"};
+				json[`start_${ax1}`] = x0;
+				json[`start_${ax2}`] = y0;
+				json[`end_${ax1}`] = x1;
+				json[`end_${ax2}`] = y1;
+				const intersection = this.intersection(json, entity2, `${ax1}-${ax2}`);
+				if (Array.isArray(intersection)) {
+					intersection.forEach((p) => {
+						let x = p[ax1];
+						let y = p[ax2];
+						let isInserted = false;
+						for (let j = 0; j < points.length; j++) {
+							if (Math.abs(points[j][ax1] - x) < this.tolerance && Math.abs(points[j][ax2] - y) < this.tolerance) {
+								isInserted = true;
+								break;
+							}
+						}
+						if (!isInserted) {							
+							points.push(p);
+						}
+					});
+				}
+				x0 = x1;
+				y0 = y1;
+			}			
+			return points;
+		} else if ((etype1 == "AcDbPolyline" && etype2 == "AcDbEllipse") || (etype2 == "AcDbPolyline" && etype1 == "AcDbEllipse")) {
+			if ((etype2 == "AcDbPolyline" && etype1 == "AcDbEllipse")) {
+				const temp = entity1;
+				entity1 = entity2;
+				entity2 = temp;
+			}
+			let points = [], arcConnected = false;
+			const vertices = JSON.parse(JSON.stringify(entity1.vertices));
+			
+			if (entity2.type == "Closed") {
+				vertices.push(vertices[0]);
+			}
+			
+			let x0 = vertices[0][`${ax1}`], x1;
+			let y0 = vertices[0][`${ax2}`], y1;
+			
+			for (let i = 1; i < vertices.length; i++) {
+				x1 = vertices[i][`${ax1}`];
+				y1 = vertices[i][`${ax2}`];
+				let json = {subclass: "AcDbLine"};
+				json[`start_${ax1}`] = x0;
+				json[`start_${ax2}`] = y0;
+				json[`end_${ax1}`] = x1;
+				json[`end_${ax2}`] = y1;
+				const intersection = this.intersection(json, entity2, `${ax1}-${ax2}`);
+				if (Array.isArray(intersection)) {
+					intersection.forEach((p) => {
+						let x = p[ax1];
+						let y = p[ax2];
+						let isInserted = false;
+						for (let j = 0; j < points.length; j++) {
+							if (Math.abs(points[j][ax1] - x) < this.tolerance && Math.abs(points[j][ax2] - y) < this.tolerance) {
+								isInserted = true;
+								break;
+							}
+						}
+						if (!isInserted) {							
+							points.push(p);
+						}
+					});
+				}
+				x0 = x1;
+				y0 = y1;
+			}	
+			return points;
+		}
+	}
+	
+	closest = (entity, etype, mode, list) => {
+		if (!entity || (typeof entity != "object")|| Array.isArray(entity) || (etype && !Array.isArray(etype))) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		const etype2 = entity.subclass;
+		let domain;
+		if (list && Array.isArray(list)) {
+			domain = list;
+		} else {
+			domain = this.entities
+		}
+		let filtered;
+		if (Array.isArray(etype)) {
+			filtered = [];
+			domain.forEach((item, index) => {				
+				const txt = item.subclass.replace("AcDb", "").toLowerCase();
+				const txt2 = item.etype ? item.etype.toLowerCase() : "";
+				if (etype.indexOf(txt) != -1 || (txt2.length > 0 && etype.indexOf(txt2) != -1)) {
+					filtered.push(item);
+				}
+			});
+		} else {
+			filtered = domain;
+		}
+		
+		if (etype2 == "AcDbLine") {
+			const x1 = entity.start_x;
+			const y1 = entity.start_y;
+			const z1 = entity.start_z;
+			const x2 = entity.end_x;
+			const y2 = entity.end_y;
+			const z2 = entity.end_z;			
+			
+			let dmin = Infinity, index = -1;
+			filtered.forEach((item, i) => {
+				let d = Infinity;
+				let etype3 = item.subclass;
+				if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
+					etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) {
+					const x = item.x;
+					const y = item.y;
+					const z = item.z;
+					if (mode == "end" || mode == "corner") {
+						const d1 = (x - x1)*(x - x1) + (y - y1)*(y - y1) + (z - z1)*(z - z1);
+						const d2 = (x - x2)*(x - x2) + (y - y2)*(y - y2) + (z - z2)*(z - z2);
+						d = Math.min(d1, d2);
+					} else if (mode == "perpendicular") {
+						let m1, m2, m3;
+						if (x !== undefined && y !== undefined) {
+							m1 = (y2 - y1)/(x2 - x1);
+						}
+						if (y !== undefined && z !== undefined) {
+							m2 = (z2 - z1)/(y2 - y1);
+						}
+						if (x !== undefined && z !== undefined) {
+							m3 = (x2 - x1)/(z2 - z1);
+						}
+						
+						if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+							const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+							const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+							const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+							const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+							const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+							const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+							const A = -m1;
+							const B = 1;
+							const C = m1*x1 - y1;
+							d = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(z1*z)) {
+								d = Math.sqrt(d*d + (z1 - z)*(z1 - z));
+							}
+						} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+							const A = -m2;
+							const B = 1;
+							const C = m2*y1 - z1;
+							d = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(x1*x)) {
+								d = Math.sqrt(d*d + (x1 - x)*(x1 - x));
+							}
+						} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+							const A = -m3;
+							const B = 1;
+							const C = m3*z1 - x1;
+							d = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(y1*y)) {
+								d = Math.sqrt(d*d + (y1 - y)*(y1 - y));
+							}
+						} else {
+							const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+							const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+							const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+							const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+							d = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+						}
+						d = d*d;
+					} else {
+						d = (x - (x1 + x2)/2)*(x - (x1 + x2)/2) + (y - (y1 + y2)/2)*(y - (y1 + y2)/2) + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+					}
+				} else if (etype3 && etype3 == "AcDbLine") {
+					const x21 = item.start_x;
+					const y21 = item.start_y;
+					const z21 = item.start_z;
+					const x22 = item.end_x;
+					const y22 = item.end_y;
+					const z22 = item.end_z;
+					
+					if (x1 == x21 && y1 == y21 && z1 == z21 && x2 == x22 && y2 == y22 && z2 == z22) {
+						return;
+					}
+					
+					if (mode == "end" || mode == "corner") {
+						const d1 = (x21 - x1)*(x21 - x1) + (y21 - y1)*(y21 - y1) + (z21 - z1)*(z21 - z1);
+						const d2 = (x21 - x2)*(x21 - x2) + (y21 - y2)*(y21 - y2) + (z21 - z2)*(z21 - z2);
+						const d3 = (x22 - x1)*(x22 - x1) + (y22 - y1)*(y22 - y1) + (z22 - z1)*(z22 - z1);
+						const d4 = (x22 - x2)*(x22 - x2) + (y22 - y2)*(y22 - y2) + (z22 - z2)*(z22 - z2);
+						d = Math.min(d1, d2, d3, d4);
+					} else if (mode == "perpendicular") {
+						let m1, m2, m3;
+						if (x21 !== undefined && y21 !== undefined) {
+							m1 = (y2 - y1)/(x2 - x1);
+						}
+						if (y21 !== undefined && z21 !== undefined) {
+							m2 = (z2 - z1)/(y2 - y1);
+						}
+						if (x21 !== undefined && z21 !== undefined) {
+							m3 = (x2 - x1)/(z2 - z1);
+						}
+						
+						if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+							const d1 = isNaN(Math.abs(x1 - x21)) ? 0 : Math.abs(x1 - x21);
+							const d2 = isNaN(Math.abs(z1 - z21)) ? 0 : Math.abs(z1 - z21);
+							const d3 = isNaN(Math.abs(x1 - x22)) ? 0 : Math.abs(x1 - x22);
+							const d4 = isNaN(Math.abs(z1 - z22)) ? 0 : Math.abs(z1 - z22);
+							d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+						} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+							const d1 = isNaN(Math.abs(y1 - y21)) ? 0 : Math.abs(y1 - y21);
+							const d2 = isNaN(Math.abs(x1 - x21)) ? 0 : Math.abs(x1 - x21);
+							const d3 = isNaN(Math.abs(y1 - y22)) ? 0 : Math.abs(y1 - y22);
+							const d4 = isNaN(Math.abs(x1 - x22)) ? 0 : Math.abs(x1 - x22);
+							d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+						} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+							const d1 = isNaN(Math.abs(y1 - y21)) ? 0 : Math.abs(y1 - y21);
+							const d2 = isNaN(Math.abs(z1 - z21)) ? 0 : Math.abs(z1 - z21);
+							const d3 = isNaN(Math.abs(y1 - y22)) ? 0 : Math.abs(y1 - y22);
+							const d4 = isNaN(Math.abs(z1 - z22)) ? 0 : Math.abs(z1 - z22);
+							d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+						} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+							const A = -m1;
+							const B = 1;
+							const C = m1*x1 - y1;
+							let d1 = Math.abs(A*x21 + B*y21 + C)/Math.sqrt(A*A + B*B);
+							let d2 = Math.abs(A*x22 + B*y22 + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(z1*z21)) {
+								d1 = Math.sqrt(d1*d1 + (z1 - z21)*(z1 - z21));
+							}
+							if (!isNaN(z1*z22)) {
+								d2 = Math.sqrt(d2*d2 + (z1 - z22)*(z1 - z22));
+							}
+							d = Math.min(d1, d2);
+						} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+							const A = -m2;
+							const B = 1;
+							const C = m2*y1 - z1;
+							let d1 = Math.abs(A*y21 + B*z21 + C)/Math.sqrt(A*A + B*B);
+							let d2 = Math.abs(A*y22 + B*z22 + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(x1*x21)) {
+								d1 = Math.sqrt(d1*d1 + (x1 - x21)*(x1 - x21));
+							}
+							if (!isNaN(x1*x22)) {
+								d2 = Math.sqrt(d2*d2 + (x1 - x22)*(x1 - x22));
+							}
+							d = Math.min(d1, d2);
+						} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+							const A = -m3;
+							const B = 1;
+							const C = m3*z1 - x1;							
+							let d1 = Math.abs(A*z21 + B*x21 + C)/Math.sqrt(A*A + B*B);
+							let d2 = Math.abs(A*z22 + B*x22 + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(y1*y21)) {
+								d1 = Math.sqrt(d1*d1 + (y1 - y21)*(y1 - y21));
+							}
+							if (!isNaN(y1*y22)) {
+								d2 = Math.sqrt(d2*d2 + (y1 - y22)*(y1 - y22));
+							}
+							d = Math.min(d1, d2);
+						} else {
+							const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+							const ii = (z21 - z1)*(y2 - y1) - (y21 - y1)*(z2 - z1);
+							const jj = (x21 - x1)*(z2 - z1) - (z21 - z1)*(x2 - x1);
+							const kk = (y21 - y1)*(x2 - x1) - (x21 - x1)*(y2 - y1);							
+							const d2 = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+							const ii2 = (z22 - z1)*(y2 - y1) - (y22 - y1)*(z2 - z1);
+							const jj2 = (x22 - x1)*(z2 - z1) - (z22 - z1)*(x2 - x1);
+							const kk2 = (y22 - y1)*(x2 - x1) - (x22 - x1)*(y2 - y1);
+							const d3 = Math.sqrt(ii2*ii2 + jj2*jj2 + kk2*kk2)/Math.sqrt(d1);
+							d = Math.min(d2, d3);
+						}
+						d = d*d;
+					} else {
+						d = ((x21 + x22)/2 - (x1 + x2)/2)*((x21 + x22)/2 - (x1 + x2)/2) + 
+							((y21 + y22)/2 - (y1 + y2)/2)*((y21 + y22)/2 - (y1 + y2)/2) + 
+							((z21 + z22)/2 - (z1 + z2)/2)*((z21 + z22)/2 - (z1 + z2)/2);
+					}
+				} else if (etype3 && (etype3 == "AcDbPolyline" || etype3 == "AcDbSpline")) {
+					let va;
+					if (etype3 == "AcDbSpline") {
+						va = item.control_points;
+					} else {
+						va = item.vertices;
+					}
+					for (let i = 0; i < va.length; i++) {
+						const x = va[i].x;
+						const y = va[i].y;
+						const z = va[i].z;
+						let d0 = Infinity;
+						let d1 = 0, d2 = 0;
+						if (mode == "end" || mode == "corner") {								
+							if (x !== undefined) {
+								d1 = d1 + (x - x1)*(x - x1);
+								d2 = d2 + (x - x2)*(x - x2);
+							}
+							if (y !== undefined) {
+								d1 = d1 + (y - y1)*(y - y1);
+								d2 = d2 + (y - y2)*(y - y2);
+							}
+							if (z !== undefined) {
+								d1 = d1 + (z - z1)*(z - z1);
+								d2 = d2 + (z - z2)*(z - z2);
+							}
+							d0 = Math.min(d1, d2);
+						} else if (mode == "perpendicular") {
+							let m1, m2, m3;
+							if (x !== undefined && y !== undefined) {
+								m1 = (y2 - y1)/(x2 - x1);
+							}
+							if (y !== undefined && z !== undefined) {
+								m2 = (z2 - z1)/(y2 - y1);
+							}
+							if (x !== undefined && z !== undefined) {
+								m3 = (x2 - x1)/(z2 - z1);
+							}
+							
+							if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+								const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+								const A = -m1;
+								const B = 1;
+								const C = m1*x1 - y1;
+								d0 = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(z1*z)) {
+									d0 = Math.sqrt(d0*d0 + (z1 - z)*(z1 - z));
+								}
+							} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+								const A = -m2;
+								const B = 1;
+								const C = m2*y1 - z1;
+								d0 = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(x1*x)) {
+									d0 = Math.sqrt(d0*d0 + (x1 - x)*(x1 - x));
+								}
+							} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+								const A = -m3;
+								const B = 1;
+								const C = m3*z1 - x1;
+								d0 = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(y1*y)) {
+									d0 = Math.sqrt(d0*d0 + (y1 - y)*(y1 - y));
+								}
+							} else {
+								const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+								const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+								const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+								const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+								d0 = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+							}
+							d0 = d0*d0;
+						} else {
+							if (x !== undefined ) {
+								d1 = d1 + (x - (x1 + x2)/2)*(x - (x1 + x2)/2);
+							}
+							if (y !== undefined ) {
+								d1 = d1 + (y - (y1 + y2)/2)*(y - (y1 + y2)/2);
+							}
+							if (z !== undefined ) {
+								d1 = d1 + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+							}
+							d0 = d1;
+						}
+						if (d0 < d) {
+							d = d0;
+						}
+					}
+				}
+				if (d < dmin) {
+					dmin = d;
+					index = i;
+				}
+			});
+			if (index > -1) {
+				return filtered[index];
+			} else {
+				return {};
+			}
+		} else if (etype2 == "AcDbPoint" || etype2 == "AcDbCircle" || etype2 == "AcDbEllipse" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+			const x = entity.x;
+			const y = entity.y;
+			const z = entity.z;		
+			
+			let dmin = Infinity, index = -1;
+			filtered.forEach((item, i) => {
+				let d = Infinity;
+				let etype3 = item.subclass;
+				if (etype3 == "AcDbLine") {
+					const x1 = item.start_x;
+					const y1 = item.start_y;
+					const z1 = item.start_z;
+					const x2 = item.end_x;
+					const y2 = item.end_y;
+					const z2 = item.end_z;
+					if (mode == "end" || mode == "corner") {
+						const d1 = (x - x1)*(x - x1) + (y - y1)*(y - y1) + (z - z1)*(z - z1);
+						const d2 = (x - x2)*(x - x2) + (y - y2)*(y - y2) + (z - z2)*(z - z2);
+						d = Math.min(d1, d2);
+					} else if (mode == "perpendicular") {
+						let m1, m2, m3;
+						if (x !== undefined && y !== undefined) {
+							m1 = (y2 - y1)/(x2 - x1);
+						}
+						if (y !== undefined && z !== undefined) {
+							m2 = (z2 - z1)/(y2 - y1);
+						}
+						if (x !== undefined && z !== undefined) {
+							m3 = (x2 - x1)/(z2 - z1);
+						}
+						
+						if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+							const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+							const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+							const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+							const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+							const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+							const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+							d = Math.sqrt(d1*d1 + d2*d2);
+						} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+							const A = -m1;
+							const B = 1;
+							const C = m1*x1 - y1;
+							d = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(z1*z)) {
+								d = Math.sqrt(d*d + (z1 - z)*(z1 - z));
+							}
+						} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+							const A = -m2;
+							const B = 1;
+							const C = m2*y1 - z1;
+							d = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(x1*x)) {
+								d = Math.sqrt(d*d + (x1 - x)*(x1 - x));
+							}
+						} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+							const A = -m3;
+							const B = 1;
+							const C = m3*z1 - x1;
+							d = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+							if (!isNaN(y1*y)) {
+								d = Math.sqrt(d*d + (y1 - y)*(y1 - y));
+							}
+						} else {
+							const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+							const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+							const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+							const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+							d = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+						}
+						
+						d = d*d;
+						
+					} else {
+						d = (x - (x1 + x2)/2)*(x - (x1 + x2)/2) + (y - (y1 + y2)/2)*(y - (y1 + y2)/2) + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+					}
+				} else if (etype3 == "AcDbPolyline" || etype3 == "AcDbSpline") {
+					let va;
+					if (etype3 == "AcDbSpline") {
+						va = item.control_points;
+					} else {
+						va = item.vertices;
+					}
+					if (item.type == "Closed") {
+						va = JSON.parse(JSON.stringify(va));
+						va.push(va[0]);
+					}
+					d = Infinity;
+					for (let i = 0; i < va.length; i++) {
+						const x1 = va[i].x;
+						const y1 = va[i].y;
+						const z1 = va[i].z;
+						let d0 = Infinity;
+						let d1 = 0, d2 = 0;
+						
+						if (mode == "end" || mode == "corner") {
+							d0 = 0;							
+							if (x !== undefined && x1 !== undefined) {
+								d0 = d0 + (x - x1)*(x - x1);
+							}
+							if (y !== undefined && y1 !== undefined) {
+								d0 = d0 + (y - y1)*(y - y1);
+							}
+							if (z !== undefined && z1 !== undefined) {
+								d0 = d0 + (z - z1)*(z - z1);
+							}
+						} else if (mode == "perpendicular") {
+							if ((i + 1) >= va.length) continue;
+							const x2 = va[i + 1].x;
+							const y2 = va[i + 1].y;
+							const z2 = va[i + 1].z;
+							let m1, m2, m3;
+							if (x !== undefined && y !== undefined) {
+								m1 = (y2 - y1)/(x2 - x1);
+							}
+							if (y !== undefined && z !== undefined) {
+								m2 = (z2 - z1)/(y2 - y1);
+							}
+							if (x !== undefined && z !== undefined) {
+								m3 = (x2 - x1)/(z2 - z1);
+							}
+							
+							if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+								const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d0 = Math.sqrt(d1*d1 + d2*d2);
+							} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+								const A = -m1;
+								const B = 1;
+								const C = m1*x1 - y1;
+								d0 = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(z1*z)) {
+									d0 = Math.sqrt(d0*d0 + (z1 - z)*(z1 - z));
+								}
+							} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+								const A = -m2;
+								const B = 1;
+								const C = m2*y1 - z1;
+								d0 = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(x1*x)) {
+									d0 = Math.sqrt(d0*d0 + (x1 - x)*(x1 - x));
+								}
+							} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+								const A = -m3;
+								const B = 1;
+								const C = m3*z1 - x1;
+								d0 = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(y1*y)) {
+									d0 = Math.sqrt(d0*d0 + (y1 - y)*(y1 - y));
+								}
+							} else {
+								const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+								const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+								const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+								const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+								d0 = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+							}
+							d0 = d0*d0;
+						} else {
+							if ((i + 1) >= va.length) continue;
+							const x2 = va[i + 1].x;
+							const y2 = va[i + 1].y;
+							const z2 = va[i + 1].z;
+							if (x1 !== undefined && x2 !== undefined ) {
+								d1 = d1 + (x - (x1 + x2)/2)*(x - (x1 + x2)/2);
+							}
+							if (y1 !== undefined && y2 !== undefined ) {
+								d1 = d1 + (y - (y1 + y2)/2)*(y - (y1 + y2)/2);
+							}
+							if (z1 !== undefined && z2 !== undefined ) {
+								d1 = d1 + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+							}
+							d0 = d1;
+						}
+						if (d0 < d) {
+							d = d0;
+						}
+					}
+				} else if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
+					etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) { 
+					const x1 = item.x;
+					const y1 = item.y;
+					const z1 = item.z;
+					
+					if ((x1 === undefined && y1 === undefined && z1 === undefined) || etype3 == etype2 && Math.abs(x - x1) < this.tolerance && Math.abs(y - y1) < this.tolerance && Math.abs(z - z1) < this.tolerance) {
+						d = Infinity;
+						return;
+					}
+					d = (x - x1)*(x - x1) + (y - y1)*(y - y1) + (z - z1)*(z - z1);
+				}
+				if (d < dmin) {
+					dmin = d;
+					index = i;			
+				}
+			});
+			
+			if (index > -1) {
+				return filtered[index];
+			} else {
+				return {};
+			}
+		} else if (etype2 == "AcDbPolyline" || etype2 == "AcDbSpline") {
+			let vb;
+			if (etype2 == "AcDbSpline") {
+				vb = entity.control_points;
+			} else {
+				vb = entity.vertices;
+			}
+			if (entity.type == "Closed") {
+				vb = JSON.parse(JSON.stringify(vb));
+				vb.push(vb[0]);
+			}
+			let dmin = Infinity, index = -1;
+			
+			for (let k = 1; k < vb.length; k++) {
+				const x1 = vb[k - 1].x;
+				const y1 = vb[k - 1].y;
+				const z1 = vb[k - 1].z;
+				const x2 = vb[k].x;
+				const y2 = vb[k].y;
+				const z2 = vb[k].z;	
+				
+				filtered.forEach((item, i) => {
+					
+					let d = Infinity;
+					let etype3 = item.subclass;
+					if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
+						etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) { 
+						const x = item.x;
+						const y = item.y;
+						const z = item.z;
+						if (mode == "end" || mode == "corner") {
+							const d1 = (x - x1)*(x - x1) + (y - y1)*(y - y1) + (z - z1)*(z - z1);
+							const d2 = (x - x2)*(x - x2) + (y - y2)*(y - y2) + (z - z2)*(z - z2);
+							d = Math.min(d1, d2);
+						} else if (mode == "perpendicular") {
+							let m1, m2, m3;
+							if (x !== undefined && y !== undefined) {
+								m1 = (y2 - y1)/(x2 - x1);
+							}
+							if (y !== undefined && z !== undefined) {
+								m2 = (z2 - z1)/(y2 - y1);
+							}
+							if (x !== undefined && z !== undefined) {
+								m3 = (x2 - x1)/(z2 - z1);
+							}
+							
+							if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+								const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+								d = Math.sqrt(d1*d1 + d2*d2);
+							} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+								const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+								const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+								d = Math.sqrt(d1*d1 + d2*d2);
+							} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+								const A = -m1;
+								const B = 1;
+								const C = m1*x1 - y1;
+								d = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(z1*z)) {
+									d = Math.sqrt(d*d + (z1 - z)*(z1 - z));
+								}
+							} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+								const A = -m2;
+								const B = 1;
+								const C = m2*y1 - z1;
+								d = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(x1*x)) {
+									d = Math.sqrt(d*d + (x1 - x)*(x1 - x));
+								}
+							} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+								const A = -m3;
+								const B = 1;
+								const C = m3*z1 - x1;
+								d = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(y1*y)) {
+									d = Math.sqrt(d*d + (y1 - y)*(y1 - y));
+								}
+							} else {
+								const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+								const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+								const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+								const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+								d = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+							}
+							d = d*d;
+						} else {
+							d = (x - (x1 + x2)/2)*(x - (x1 + x2)/2) + (y - (y1 + y2)/2)*(y - (y1 + y2)/2) + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+						}
+						
+					} else if (etype3 == "AcDbLine") {
+						const x21 = item.start_x;
+						const y21 = item.start_y;
+						const z21 = item.start_z;
+						const x22 = item.end_x;
+						const y22 = item.end_y;
+						const z22 = item.end_z;
+						
+						if (x1 == x21 && y1 == y21 && z1 == z21 && x2 == x22 && y2 == y22 && z2 == z22) {
+							return;
+						}
+						
+						if (mode == "end" || mode == "corner") {
+							let d1 = 0, d2 = 0, d3 = 0, d4 = 0;
+							if (x1 && x2) {
+								d1 = d1 + (x21 - x1)*(x21 - x1);
+								d2 = d2 + (x21 - x2)*(x21 - x2);
+								d3 = d3 + (x22 - x1)*(x22 - x1);
+								d4 = d4 + (x22 - x2)*(x22 - x2);
+							} 
+							if (y1 && y2) {
+								d1 = d1 + (y21 - y1)*(y21 - y1);
+								d2 = d2 + (y21 - y2)*(y21 - y2);
+								d3 = d3 + (y22 - y1)*(y22 - y1);
+								d4 = d4 + (y22 - y2)*(y22 - y2);
+							} 
+							if (z1 && z2) {
+								d1 = d1 + (z21 - z1)*(z21 - z1);
+								d2 = d2 + (z21 - z2)*(z21 - z2);
+								d3 = d3 + (z22 - z1)*(z22 - z1);
+								d4 = d4 + (z22 - z2)*(z22 - z2);
+							}							
+							d = Math.min(d1, d2, d3, d4);
+						} else if (mode == "perpendicular") {
+							let m1, m2, m3;
+							if (x21 !== undefined && y21 !== undefined) {
+								m1 = (y2 - y1)/(x2 - x1);
+							}
+							if (y21 !== undefined && z21 !== undefined) {
+								m2 = (z2 - z1)/(y2 - y1);
+							}
+							if (x21 !== undefined && z21 !== undefined) {
+								m3 = (x2 - x1)/(z2 - z1);
+							}
+							
+							if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+								const d1 = isNaN(Math.abs(x1 - x21)) ? 0 : Math.abs(x1 - x21);
+								const d2 = isNaN(Math.abs(z1 - z21)) ? 0 : Math.abs(z1 - z21);
+								const d3 = isNaN(Math.abs(x1 - x22)) ? 0 : Math.abs(x1 - x22);
+								const d4 = isNaN(Math.abs(z1 - z22)) ? 0 : Math.abs(z1 - z22);
+								d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+							} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+								const d1 = isNaN(Math.abs(y1 - y21)) ? 0 : Math.abs(y1 - y21);
+								const d2 = isNaN(Math.abs(x1 - x21)) ? 0 : Math.abs(x1 - x21);
+								const d3 = isNaN(Math.abs(y1 - y22)) ? 0 : Math.abs(y1 - y22);
+								const d4 = isNaN(Math.abs(x1 - x22)) ? 0 : Math.abs(x1 - x22);
+								d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+							} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+								const d1 = isNaN(Math.abs(y1 - y21)) ? 0 : Math.abs(y1 - y21);
+								const d2 = isNaN(Math.abs(z1 - z21)) ? 0 : Math.abs(z1 - z21);
+								const d3 = isNaN(Math.abs(y1 - y22)) ? 0 : Math.abs(y1 - y22);
+								const d4 = isNaN(Math.abs(z1 - z22)) ? 0 : Math.abs(z1 - z22);
+								d = Math.min(Math.sqrt(d1*d1 + d2*d2), Math.sqrt(d3*d3 + d4*d4));
+							} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+								const A = -m1;
+								const B = 1;
+								const C = m1*x1 - y1;
+								let d1 = Math.abs(A*x21 + B*y21 + C)/Math.sqrt(A*A + B*B);
+								let d2 = Math.abs(A*x22 + B*y22 + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(z1*z21)) {
+									d1 = Math.sqrt(d1*d1 + (z1 - z21)*(z1 - z21));
+								}
+								if (!isNaN(z1*z22)) {
+									d2 = Math.sqrt(d2*d2 + (z1 - z22)*(z1 - z22));
+								}
+								d = Math.min(d1, d2);
+							} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+								const A = -m2;
+								const B = 1;
+								const C = m2*y1 - z1;
+								let d1 = Math.abs(A*y21 + B*z21 + C)/Math.sqrt(A*A + B*B);
+								let d2 = Math.abs(A*y22 + B*z22 + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(x1*x21)) {
+									d1 = Math.sqrt(d1*d1 + (x1 - x21)*(x1 - x21));
+								}
+								if (!isNaN(x1*x22)) {
+									d2 = Math.sqrt(d2*d2 + (x1 - x22)*(x1 - x22));
+								}
+								d = Math.min(d1, d2);
+							} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+								const A = -m3;
+								const B = 1;
+								const C = m3*z1 - x1;							
+								let d1 = Math.abs(A*z21 + B*x21 + C)/Math.sqrt(A*A + B*B);
+								let d2 = Math.abs(A*z22 + B*x22 + C)/Math.sqrt(A*A + B*B);
+								if (!isNaN(y1*y21)) {
+									d1 = Math.sqrt(d1*d1 + (y1 - y21)*(y1 - y21));
+								}
+								if (!isNaN(y1*y22)) {
+									d2 = Math.sqrt(d2*d2 + (y1 - y22)*(y1 - y22));
+								}
+								d = Math.min(d1, d2);
+							} else {
+								const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+								const ii = (z21 - z1)*(y2 - y1) - (y21 - y1)*(z2 - z1);
+								const jj = (x21 - x1)*(z2 - z1) - (z21 - z1)*(x2 - x1);
+								const kk = (y21 - y1)*(x2 - x1) - (x21 - x1)*(y2 - y1);							
+								const d2 = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+								const ii2 = (z22 - z1)*(y2 - y1) - (y22 - y1)*(z2 - z1);
+								const jj2 = (x22 - x1)*(z2 - z1) - (z22 - z1)*(x2 - x1);
+								const kk2 = (y22 - y1)*(x2 - x1) - (x22 - x1)*(y2 - y1);
+								const d3 = Math.sqrt(ii2*ii2 + jj2*jj2 + kk2*kk2)/Math.sqrt(d1);
+								d = Math.min(d2, d3);
+							}
+							d = d*d;
+						} else {
+							d = 0;
+							if (x1 && x2 && x21 && x22) {
+								let d1 = (x21 - (x1 + x2)/2)*(x21 - (x1 + x2)/2);
+								let d2 = (x22 - (x1 + x2)/2)*(x22 - (x1 + x2)/2);
+								d = d + Math.min(d1, d2);
+							} 
+							if (y1 && y2 && y21 && y22) {
+								let d1 = (y21 - (y1 + y2)/2)*(y21 - (y1 + y2)/2);
+								let d2 = (y22 - (y1 + y2)/2)*(y22 - (y1 + y2)/2);
+								d = d + Math.min(d1, d2);
+							} 
+							if (z1 && z2 && z21 && z22) {
+								let d1 = (z21 - (z1 + z2)/2)*(z21 - (z1 + z2)/2);
+								let d2 = (z22 - (z1 + z2)/2)*(z22 - (z1 + z2)/2);
+								d = d + Math.min(d1, d2);
+							}
+						}
+					} else if (etype3 == "AcDbPolyline" || etype == "AcDbSpline") {
+						let va;
+						if (etype3 == "AcDbSpline") {
+							va = item.control_points;
+						} else {
+							va = item.vertices;
+						}
+						
+						if (entity.type == "Closed") {
+							if ((va + "") == (vb.slice(0, vb.length - 1) + "")) return;
+						} else {
+							if ((va + "") == (vb + "")) return;
+						}						
+						
+						for (let i = 0; i < va.length; i++) {
+							const x = va[i].x;
+							const y = va[i].y;
+							const z = va[i].z;
+							let d0 = Infinity;
+							let d1 = 0, d2 = 0;
+							if (mode == "end" || mode == "corner") {								
+								if (x !== undefined) {
+									d1 = d1 + (x - x1)*(x - x1);
+									d2 = d2 + (x - x2)*(x - x2);
+								}
+								if (y !== undefined) {
+									d1 = d1 + (y - y1)*(y - y1);
+									d2 = d2 + (y - y2)*(y - y2);
+								}
+								if (z !== undefined) {
+									d1 = d1 + (z - z1)*(z - z1);
+									d2 = d2 + (z - z2)*(z - z2);
+								}
+								d0 = Math.min(d1, d2);
+							} else if (mode == "perpendicular") {
+								let m1, m2, m3;
+								if (x !== undefined && y !== undefined) {
+									m1 = (y2 - y1)/(x2 - x1);
+								}
+								if (y !== undefined && z !== undefined) {
+									m2 = (z2 - z1)/(y2 - y1);
+								}
+								if (x !== undefined && z !== undefined) {
+									m3 = (x2 - x1)/(z2 - z1);
+								}
+								
+								if (Math.abs(m1) == Infinity && !m2 && (isNaN(m3) || !m3)) {
+									const d1 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+									const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+									d = Math.sqrt(d1*d1 + d2*d2);
+								} else if (Math.abs(m2) == Infinity && !m3 && (isNaN(m1) || !m1)) {
+									const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+									const d2 = isNaN(Math.abs(x1 - x)) ? 0 : Math.abs(x1 - x);
+									d = Math.sqrt(d1*d1 + d2*d2);
+								} else if (Math.abs(m3) == Infinity && !m1 && (isNaN(m2) || !m2)) {
+									const d1 = isNaN(Math.abs(y1 - y)) ? 0 : Math.abs(y1 - y);
+									const d2 = isNaN(Math.abs(z1 - z)) ? 0 : Math.abs(z1 - z);
+									d = Math.sqrt(d1*d1 + d2*d2);
+								} else if ((!m3 || Math.abs(m3) == Infinity) && !m2 && Math.abs(m1) > 0) {
+									const A = -m1;
+									const B = 1;
+									const C = m1*x1 - y1;
+									d = Math.abs(A*x + B*y + C)/Math.sqrt(A*A + B*B);
+									if (!isNaN(z1*z)) {
+										d = Math.sqrt(d*d + (z1 - z)*(z1 - z));
+									}
+								} else if ((!m1 || Math.abs(m1) == Infinity) && !m3 && Math.abs(m2) > 0) {
+									const A = -m2;
+									const B = 1;
+									const C = m2*y1 - z1;
+									d = Math.abs(A*y + B*z + C)/Math.sqrt(A*A + B*B);
+									if (!isNaN(x1*x)) {
+										d = Math.sqrt(d*d + (x1 - x)*(x1 - x));
+									}
+								} else if ((!m2 || Math.abs(m2) == Infinity) && !m1 && Math.abs(m3) > 0) {
+									const A = -m3;
+									const B = 1;
+									const C = m3*z1 - x1;
+									d = Math.abs(A*z + B*x + C)/Math.sqrt(A*A + B*B);
+									if (!isNaN(y1*y)) {
+										d = Math.sqrt(d*d + (y1 - y)*(y1 - y));
+									}
+								} else {
+									const ii = (z - z1)*(y2 - y1) - (y - y1)*(z2 - z1);
+									const jj = (x - x1)*(z2 - z1) - (z - z1)*(x2 - x1);
+									const kk = (y - y1)*(x2 - x1) - (x - x1)*(y2 - y1);
+									const d1 = (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2);
+									d = Math.sqrt(ii*ii + jj*jj + kk*kk)/Math.sqrt(d1);
+								}
+								d = d*d;
+							} else {
+								if (x !== undefined ) {
+									d1 = d1 + (x - (x1 + x2)/2)*(x - (x1 + x2)/2);
+								}
+								if (y !== undefined ) {
+									d1 = d1 + (y - (y1 + y2)/2)*(y - (y1 + y2)/2);
+								}
+								if (z !== undefined ) {
+									d1 = d1 + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
+								}
+								d0 = d1;
+							}
+							if (d0 < d) {
+								d = d0;
+							}
+						}
+					}
+					if (d < dmin) {
+						dmin = d;
+						index = i;
+					}
+				});
+			}
+			if (index > -1) {
+				return filtered[index];
+			} else {
+				return {};
+			}
+		}
+	}
+	
+	getEllipseAngles = (entity) => {
+		let dx = entity.major_end_dx;
+		let dy = entity.major_end_dy;
+		let dz = entity.major_end_dz;
+		if (Math.abs(dz) > this.tolernace && Math.abs(dx) < this.tolerance) {
+			dx = dz;
+		}
+		if (Math.abs(dz) > this.tolernace && Math.abs(dy) < this.tolerance) {
+			dy = dz;
+		}
+		const ratio = entity.minorToMajor;
+		const a = Math.sqrt(dx*dx + dy*dy);
+		const b = ratio*a;		
+		const theta = Math.atan2(dy, dx);		
+		let sa = entity.start_parameter;
+		let ea = entity.end_parameter;
+		
+		const zs = (a - b)*Math.sin(sa);
+		const ze = (a - b)*Math.sin(ea);
+		const dx1s = zs*Math.sin(theta);
+		const dy1s = zs*Math.cos(theta);
+		const dx1e = ze*Math.sin(theta);
+		const dy1e = ze*Math.cos(theta);
+		
+		const xp1s = a*Math.cos(sa + theta);
+		const yp1s = a*Math.sin(sa + theta);
+		const xp1e = a*Math.cos(ea + theta);
+		const yp1e = a*Math.sin(ea + theta);
+		const true_sa = (Math.atan2((yp1s - dy1s), (xp1s + dx1s)))*180/Math.PI;
+		const true_ea = (Math.atan2((yp1e - dy1e), (xp1e + dx1e)))*180/Math.PI;
+		entity.start_angle = true_sa;
+		entity.end_angle = true_ea;
 	}
 }
 	
