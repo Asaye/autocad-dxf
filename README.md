@@ -59,8 +59,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- Former ```start_angle``` and ```end_angle``` properties of ellipses (```AcDbEllipse```) have now become ```start_parameter``` and ```end_parameter``` respectively to mark that they donote the parametric angles. The ```start_angle``` and ```end_angle``` properties still exist for ellipses but they now represent the true start and end angles in degrees.
-- ```intersection``` and ```closest``` functions are added.
+- New entities (```AcDbTable```, ```AcDbRevolvedSurface```, ```AcDbLoftedSurface```, ```AcDbSweptSurface``` and ```AcDbExtrudedSurface```) are added.
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 

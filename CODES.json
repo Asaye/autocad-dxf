@@ -98,6 +98,31 @@
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
 		"100": "subclass"      // subclass marker, AcDbEllipse
 	},
+	"AcDbExtrudedSurface": {
+		"0": "etype",                        // type of entity, SURFACE
+		"1": "proprietary_data",             // proprietary data upto 255 characters (exclusive)
+		"3": "proprietary_data",             // proprietary data beyond 255 characters
+		"6": "line_type",                    // line type name
+		"8": "layer",                        // the layer on which the point is defined
+		"10": "x",                           // the x coordinate of the sweep vector
+		"20": "y",                           // the y coordinate of the sweep vector
+		"30": "z",                           // the z coordinate of the sweep vector
+		"11": "ref_vector.x",                // Reference vector for controlling twist, x value
+		"21": "ref_vector.y",                // Reference vector for controlling twist, y value
+		"31": "ref_vector.z",                // Reference vector for controlling twist, z value
+		"40": "transform_matrix_revolved",   // Transform matrix of revolved entity (16 reals; row major format; default = identity matrix)		
+		"42": "draft_angle",                 // Draft angle (in radians)
+		"43": "start_draft_distance",        // Start draft distance
+		"44": "end_draft_distance",          // End draft distance
+		"45": "twist_angle",                 // Twist angle (in radians)
+		"46": "transform_matrix_sweep",      // Transform matrix of sweep entity (16 reals; row major format; default = identity matrix)
+		"47": "transform_matrix_path",       // Transform matrix of path entity (16 reals; row major format; default = identity matrix)
+		"48": "scale_factor",                // Scale factor
+		"49": "align_angle",                 // Align angle (in radians)
+		"70": "sweep_alignment_option",      // Sweep alignment option
+		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbExtrudedSurface
+		"310": "binary_data"                 // binary data
+	},
 	"AcDbFace": {
 		"0": "etype",        // type of entity, 3DFACE
 		"6": "line_type",    // line type name
@@ -207,6 +232,20 @@
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
 		"100": "subclass",   // subclass marker. AcDbLine in this case
+	},
+	"AcDbLoftedSurface": {
+		"0": "etype",                    // type of entity, SURFACE
+		"1": "proprietary_data",         // proprietary data upto 255 characters (exclusive)
+		"3": "proprietary_data",         // proprietary data beyond 255 characters
+		"6": "line_type",                // line type name
+		"8": "layer",                    // the layer on which the point is defined		
+		"40": "transform_matrix",        // Revolve angle (in radians)
+		"41": "start_draft_angle",       // Start draft angle (in radians)
+		"42": "end_draft_angle",         // End draft angle (in radians)
+		"43": "start_draft_magnitude",   // Start draft magnitude
+		"44": "end_draft_magnitude",     // End draft magnitude		
+		"48": "scale_factor",            // Scale factor
+		"100": "subclass/specific_type"  // subclass marker, AcDbModelerGeometry/AcDbLoftedSurface
 	},	
 	"AcDbModelerGeometry": {
 		"0": "etype",               // type of entity, 3DSOLID
@@ -347,6 +386,30 @@
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer		
 		"100": "subclass"           // subclass marker, AcDbRay
 	},
+	"AcDbRevolvedSurface": {
+		"0": "etype",               // type of entity, SURFACE
+		"1": "proprietary_data",    // proprietary data upto 255 characters (exclusive)
+		"3": "proprietary_data",    // proprietary data beyond 255 characters
+		"6": "line_type",           // line type name
+		"8": "layer",               // the layer on which the point is defined
+		"10": "x",                  // the x coordinate of the axis point
+		"20": "y",                  // the y coordinate of the axis point
+		"30": "z",                  // the z coordinate of the axis point
+		"11": "axis_vector.x",      // axis vector, x value
+		"21": "axis_vector.y",      // axis vector, y value
+		"31": "axis_vector.z",      // axis vector, z value
+		"40": "revolve_angle",      // Revolve angle (in radians)
+		"41": "start_angle",        // Start angle (in radians)
+		"42": "transform_matrix",   // Transform matrix of revolved entity (16 reals; row major format; default = identity matrix)
+		"43": "draft_angle",        // Draft angle (in radians)
+		"44": "start_draft_distance",    // Start draft distance
+		"45": "end_draft_distance", // End draft distance
+		"46": "twist_angle",        // Twist angle (in radians)
+		"71": "n_u_isolines",       // Number of U isolines
+		"72": "n_v_isolines",       // Number of V isolines
+		"100": "subclass/specific_type",  // subclass marker, AcDbModelerGeometry/AcDbRevolvedSurface
+		"310": "binary_data"        // binary data
+	},
 	"AcDbShape": {
 		"0": "etype",               // type of entity, SHAPE
 		"2": "style_name",	        // style name
@@ -382,6 +445,70 @@
 		"73": "number_of_control_points",  // number of control points
 		"74": "number_of_fit_points",      // number of fit points
 		"100": "subclass"                  // subclass marker, AcDbSpline
+	},
+	"AcDbSweptSurface": {
+		"0": "etype",                        // type of entity, SURFACE
+		"1": "proprietary_data",             // proprietary data upto 255 characters (exclusive)
+		"3": "proprietary_data",             // proprietary data beyond 255 characters
+		"6": "line_type",                    // line type name
+		"8": "layer",                        // the layer on which the point is defined
+		"10": "x",                           // the x coordinate of the sweep vector
+		"20": "y",                           // the y coordinate of the sweep vector
+		"30": "z",                           // the z coordinate of the sweep vector
+		"11": "ref_vector.x",                // Reference vector for controlling twist, x value
+		"21": "ref_vector.y",                // Reference vector for controlling twist, y value
+		"31": "ref_vector.z",                // Reference vector for controlling twist, z value
+		"40": "transform_matrix_sweep2",     // Transform matrix of sweep entity (16 reals; row major format; default = identity matrix)	
+		"41": "transform_matrix_path2",      // Transform matrix of path entity (16 reals; row major format; default = identity matrix)	
+		"42": "draft_angle",                 // Draft angle (in radians)
+		"43": "start_draft_distance",        // Start draft distance
+		"44": "end_draft_distance",          // End draft distance
+		"45": "twist_angle",                 // Twist angle (in radians)
+		"46": "transform_matrix_sweep",      // Transform matrix of sweep entity (16 reals; row major format; default = identity matrix)
+		"47": "transform_matrix_path",       // Transform matrix of path entity (16 reals; row major format; default = identity matrix)
+		"48": "scale_factor",                // Scale factor
+		"49": "align_angle",                 // Align angle (in radians)
+		"70": "sweep_alignment_option",      // Sweep alignment option
+		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbSweptSurface
+		"310": "binary_data"                 // binary data
+	},
+	"AcDbTable": {
+		"0": "etype",                               // type of entity, ACAD_TABLE
+		"1": "cell_text",                           // text string
+		"6": "line_type",                           // line type name
+		"7": "style",                               // text style name		
+		"8": "layer",                               // the layer on which the point is defined	
+		"10": "x",                                  // the x coordinate of the insertion point point
+		"20": "y",                                  // the y coordinate of the insertion point point	
+		"30": "z",                                  // the z coordinate of the insertion point point	
+		"11": "direction.x",                        // the x coordinate of a direction vector
+		"21": "direction.y",                        // the y coordinate of a direction vector
+		"31": "direction.z",                        // the z coordinate of a direction vector
+		"60": "merged_value",                       // cell merged value, one for each cell
+		"63": "fill_color",                         // Value for the background (fill) color of cell content, one for each cell
+		"64": "cell_color",                         // Value for the color of cell content, one for each cell
+		"65": "border_color_right",                 // True color value for the right border of the cell, one for each cell
+		"66": "border_color_bottom",                // True color value for the bottom border of the cell, one for each cell
+		"68": "border_color_left",                  // True color value for the left border of the cell, one for each cell
+		"69": "border_color_top",                   // True color value for the top border of the cell, one for each cell		
+		"91": "n_rows",                             // number of rows
+		"92": "n_bytes_proxy_graphics/n_columns",   // Number of bytes in the proxy entity graphics/ number of columns
+		"140": "text_height",                       // Text height value; override applied at the cell level
+		"141": "row_height",                        // row height, one for each row 
+		"142": "column_width",                      // column width, one for each column
+		"144": "block_scale",                       // Block scale (real). This value applies only to block-type cells and is repeated, 1 value per cell
+		"145": "rotation",                          // Rotation value (real; applicable for a block-type cell and a text-type cell)
+		"170": "cell_alignment",                    // cell alignment, text/block, one for each cell 
+		"171": "cell_type",                         // cell type, text/block, one for each cell 		
+		"175": "border_width",                      // cell border width, one for each cell
+		"176": "border_height",                     // cell border height, one for each cell
+		"275": "line_weight_right",                 // Lineweight for the right border of the cell, one for each cell
+		"276": "line_weight_bottom",                // Lineweight for the bottom border of the cell, one for each cell
+		"278": "line_weight_left",                  // Lineweight for the left border of the cell, one for each cell
+		"279": "line_weight_top",                   // Lineweight for the top border of the cell, one for each cell
+		"283": "fill_color_on",                     // Boolean flag for whether the fill color is on, one for each cell
+		"289": "top_border_visible",                // Boolean flag for the visibility of the top border of the cell, one for each cell
+		"310": "proxy_graphics_data"               // Data for proxy entity graphics 
 	},	
 	"AcDbText": {
 		"0": "etype",               // type of entity, TEXT/ATTRIB/ATTDEF

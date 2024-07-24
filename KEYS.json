@@ -6,6 +6,7 @@
 	"AcDbCircle": ["layer", "etype", "subclass", "line_type", "line_scale",  "color", "visibility", "x", "y", "z", "radius"],	 
 	"AcDbArc": ["layer", "etype", "subclass", "line_type","line_type",  "line_scale","color", "visibility",  "x", "y", "z", "radius", "start_angle", "end_angle"],	
 	"AcDbEllipse": ["layer", "etype", "subclass", "line_type","line_scale", "color", "visibility",  "x", "y","z", "major_end_dx", "major_end_dy", "major_end_dz", "minorToMajor", "start_parameter", "end_parameter", "start_angle", "end_angle"],
+	"AcDbExtrudedSurface": ["etype", "proprietary_data", "proprietary_data", "line_type", "layer", "x", "y", "z", "ref_vector", "transform_matrix_revolved", "draft_angle",	"start_draft_distance",	"end_draft_distance", "twist_angle", "transform_matrix_sweep", "transform_matrix_path",	"scale_factor", "align_angle", "sweep_alignment_option", "subclass/specific_type", "binary_data"],
 	"AcDbPolyline": ["layer", "etype", "subclass", "line_type","line_scale","color", "visibility",   "type", "vertices", "number_of_vertices"],
 	"AcDb3dPolyline": ["layer", "etype", "subclass", "line_type","line_scale","color", "visibility",   "type", "vertices", "number_of_vertices"],	
 	"AcDbText": ["layer", "etype", "subclass", "line_type","line_scale", "color", "visibility", "x", "y", "z","text", "style", "height", "rotation", "width", "character_width", "rotation"],
@@ -24,7 +25,10 @@
 	"AcDbVertex": ["layer", "etype", "subclass","line_scale", "color", "visibility",  "x", "y", "z", "start_width", "end_width", "curve_fit_tangent_direction", "type"],
 	"AcDbBlockReference": ["etype", "block_name",  "line_type", "layer","scale_x", "scale_y", "scale_z", "column_spacing", "row_spacing", "line_scale", "rotation", "visibility", "column_count", "row_count",  "subclass"],	
 	"AcDbXline": ["etype", "line_type", "layer", "first_point", "unit_direction_vector", "line_scale", "visibility", "color", "subclass"],
-	
+	"AcDbLoftedSurface": ["etype", "proprietary_data", "proprietary_data", "line_type", "layer", "transform_matrix", "start_draft_angle", "end_draft_angle", "start_draft_magnitude", "end_draft_magnitude", "scale_factor", "subclass/specific_type"],	
+	"AcDbRevolvedSurface": ["etype", "proprietary_data", "proprietary_data", "line_type", "layer", "x", "y", "z", "axis_vector", "revolve_angle", "start_angle", "transform_matrix", "draft_angle", "start_draft_distance", "end_draft_distance", "twist_angle", "n_u_isolines", "n_v_isolines", "subclass/specific_type", "binary_data"],
+	"AcDbSweptSurface": ["etype", "proprietary_data", "proprietary_data", "line_type", "layer",	"x", "y", "z", "ref_vector", "transform_matrix_sweep2", "transform_matrix_path2", "draft_angle", "start_draft_distance", "end_draft_distance", "twist_angle", "transform_matrix_sweep", "transform_matrix_path", "scale_factor", "align_angle",  "sweep_alignment_option", "subclass/specific_type", "binary_data"],
+	"AcDbTable": ["etype", "cell_text",	"line_type", "style", "layer", "x", "y", "z", "direction", "merged_value", "fill_color", "cell_color", "border_color_right", "border_color_bottom",	"border_color_left", "border_color_top", "n_rows", "n_bytes_proxy_graphics/n_columns", "text_height", "row_height",	"column_width",	"block_scale", "rotation", "cell_alignment", "cell_type", "border_width", "border_height", "line_weight_right", "line_weight_bottom", "line_weight_left", "line_weight_top", "fill_color_on", "top_border_visible", "proxy_graphics_data"],	
 	// tables
 	"APPID": ["name"],
 	"DIMSTYLE": ["name", "dim_prefix", "dim_suffix", "arrow1", "arrow2", "dim_scale_overall", "arrow_size", "ext_line_offset", "dim_line_increment", "ext_line_extension", "dim_roundoff",
