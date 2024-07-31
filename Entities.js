@@ -2,6 +2,8 @@ const Distance = require("./Distance");
 const Length = require("./Length");
 const Intersection = require("./Intersection");
 const Closest = require("./Closest");
+const Triangulate = require("./Triangulate");
+const Area = require("./Area");
 const ErrorMessages = require("./ErrorMessages.json");
 const DIMSTYLE_CODES = require("./DIMSTYLE_CODES.json");
 const KEYS = require("./KEYS");
@@ -12,7 +14,7 @@ const Entities = class {
 		this.entities = [];
 		this.tables = {};
 		this.blocks = [];
-		this.tolerance = tolerance || 0.0001;
+		this.tolerance = isNaN(tolerance) ? 0.0001 : tolerance;
 		this.KEYS = KEYS;
 		this.CODES = CODES;
 		if (data && typeof data == "string") {
@@ -608,16 +610,31 @@ const Entities = class {
 	
 	getEntities = (array, COUNT) => {
 		let json, json2;
+		
 		while (COUNT < array.length - 1) {
 			const code = array[COUNT].trim();
 			const value = array[COUNT + 1].trim();	
-			if (code == "0" && value == "ENDSEC" && json.etype != "SEQEND") {
+			if (code == "0" && value == "ENDSEC" && json.etype != "SEQEND") {	
+				/* if (json.subclass == "AcDbPolyline") {
+					const A = this.area(json);
+					const L = this.length(json);
+					if (!isNaN(A.area)) json.area = A.area;
+					if (!isNaN(L)) json.perimeter = L;
+				} */
 				this.entities.push(json);
 				return COUNT + 2;
 			}
 					
 			if (code == "0" && (!json || (json.subclass && json.subclass != "AcDb3dPolyline" && json.etype != "SEQEND"))) {					
-				if (json) this.entities.push(json);
+				if (json) {
+					/* if (json.subclass == "AcDbPolyline" && json.area === undefined) {						
+						const A = this.area(json);
+						const L = this.length(json);
+						if (!isNaN(A.area)) json.area = A.area;
+						if (!isNaN(L)) json.perimeter = L;
+					} */
+					this.entities.push(json);
+				}
 				json = {};
 				this.insertEntity(code, value, json);
 			} else if (code == "0" && json && json.subclass == "AcDb3dPolyline" && value == "SEQEND") {
@@ -943,7 +960,8 @@ const Entities = class {
 			} 
 		} else if (code == "31") {
 			if (json.subclass == "AcDbLine") {
-				json.end_z = parseFloat(value);  
+				json.end_z = parseFloat(value);
+				json.length = this.length(json);
 			} else if (json.subclass == "AcDbSpline") {
 				json.fit_points[json.fit_points.length - 1]["z"] = parseFloat(value);
 			} else if (json.subclass == "AcDbEllipse") {
@@ -1056,7 +1074,11 @@ const Entities = class {
 			}  
 		} else if (code == "40") {
 			if (json.subclass == "AcDbCircle") {
-				json.radius = parseFloat(value);  
+				json.radius = parseFloat(value);
+				let A = this.area(json);
+				const C = this.length(json);
+				json.area = A.area;
+				json.circumference = C;
 			} else if (json.subclass == "AcDbEllipse") {
 				json.minorToMajor = parseFloat(value);  
 			} else if (json.subclass == "AcDbSpline") {
@@ -1214,7 +1236,12 @@ const Entities = class {
 			} 				 
 		} else if (code == "51") {
 			if (json.subclass == "AcDbCircle") {
-				json.end_angle = parseFloat(value);  
+				json.end_angle = parseFloat(value);
+				const A = this.area(json);
+				const C = this.length(json);
+				delete json.circumference;
+				json.area = A.area;
+				json.arc_length = C;
 			} 					  
 		} else if (code == "52") {
 			if (json.subclass == "AcDbHatch") {
@@ -1816,8 +1843,18 @@ const Entities = class {
 		const yp1e = a*Math.sin(ea + theta);
 		const true_sa = (Math.atan2((yp1s - dy1s), (xp1s + dx1s)))*180/Math.PI;
 		const true_ea = (Math.atan2((yp1e - dy1e), (xp1e + dx1e)))*180/Math.PI;
-		entity.start_angle = true_sa;
-		entity.end_angle = true_ea;
+		entity.start_angle = parseFloat(true_sa.toFixed(12));
+		entity.end_angle = parseFloat(true_ea.toFixed(12));
+		let temp1 = Math.atan2(ratio*Math.sin(sa), Math.cos(sa))*180/Math.PI;
+		let temp2 = Math.atan2(ratio*Math.sin(ea), Math.cos(ea))*180/Math.PI;
+		if (temp1 < 0) temp1 = temp1 + 360;
+		if (temp2 < 0) temp2 = temp2 + 360;
+		entity.start_angle2 = temp1;
+		entity.end_angle2 = temp2;
+		let A = this.area(entity);
+		entity.area = A.area;
+		if (A.area_sector) entity.area_sector = A.area_sector;
+		if (A.area_full) entity.area_full = A.area_full;
 	}	
 	
 	checkText = (text, item) => {
@@ -2156,6 +2193,14 @@ const Entities = class {
 	
 	closest = (entity, etype, mode, list) => {
 		return Closest(entity, etype, mode, list, this.entities, this.tolerance);
+	}
+	
+	triangulate = (vertices, plane)  => {
+		return Triangulate(vertices, plane, this.getAxes, this.tolerance);
+	}
+	
+	area = (entity, plane)  => {
+		return Area(entity, plane, this.getAxes, this.tolerance);
 	}
 }
 	

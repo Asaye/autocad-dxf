@@ -57,7 +57,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			return vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2, tolerance);
 		}		
 		
-		if (Math.abs((Math.abs(m1) - Math.abs(m2))) < tolerance) return [];
+		if (Math.abs(m1 - m2) < tolerance) return [];
 		const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
 		const y = m1*x + (-m1*x11 + y11);
 		const isCrossing = (x - x11)*(x - x12) < tolerance && (x - x21)*(x - x22) < tolerance && 

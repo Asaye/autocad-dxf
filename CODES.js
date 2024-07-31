@@ -42,7 +42,10 @@ module.exports = {
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass/specific_type"      // subclass marker (AcDbCircle)/the specific type of the circle (AcDbArc)	
+		"100": "subclass/specific_type",      // subclass marker (AcDbCircle)/the specific type of the circle (AcDbArc)	
+		"**": "area",          // area of a circle or the visible segment of a circular arc
+		"***": "area_sector",  // area of a sector for arcs
+		"****": "circumference/arc_length"     // circumeference of arc length
 	},
 	"AcDbDimension": {
 		"0": "etype",                        // type of entity, DIMENSION		
@@ -91,12 +94,17 @@ module.exports = {
 		"40": "minorToMajor",  // the length ratio of the minor axis to the major axis
 		"41": "start_parameter",   // the parameteric angle of the start point of the ellipse, 0 for full ellipse
 		"42": "end_parameter",     // the parameteric angle of the end point of the ellipse, 2*PI for full ellipse
-		"41a": "start_angle",  // the start angle of the ellipse, 0 for full ellipse
-		"42a": "end_angle",    // the end angle of the ellipse, 360 for full ellipse
+		"41a": "start_angle",  // the start angle of the ellipse measured from +x axis, 0 for full ellipse
+		"42a": "end_angle",    // the end angle of the ellipse measured from +x axis, 360 for full ellipse
+		"41b": "start_angle2", // the start angle of the ellipse measured from the major axis, 0 for full ellipse
+		"42b": "end_angle2",   // the end angle of the ellipse measured from the major axis, 360 for full ellipse
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"      // subclass marker, AcDbEllipse
+		"100": "subclass",     // subclass marker, AcDbEllipse
+		"**": "area",          // area of a circle or the visible segment of an elliptical arc
+		"***": "area_sector",  // area of a sector for arcs
+		"****": "area_full"    // the full area of the ellipse in case the ellipse is an arc
 	},
 	"AcDbExtrudedSurface": {
 		"0": "etype",                        // type of entity, SURFACE
@@ -232,6 +240,7 @@ module.exports = {
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
 		"100": "subclass",   // subclass marker. AcDbLine in this case
+		"**": "length"       // length of the line
 	},
 	"AcDbLoftedSurface": {
 		"0": "etype",                    // type of entity, SURFACE

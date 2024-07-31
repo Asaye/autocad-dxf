@@ -44,7 +44,7 @@ module.exports = (entity, plane, getAxes, tolerance) => {
 			return 2*Math.PI*entity.radius;
 		}
 	} else if (etype == "AcDbEllipse") {			
-		if (Math.abs(Math.abs(entity.start_angle - entity.end_angle) - 2*Math.PI) > tolerance) { // full ellipse
+		if (Math.abs(Math.abs(entity.start_parameter - entity.end_parameter) - 2*Math.PI) > tolerance) { // not full ellipse
 			return;							
 		}
 		const dx = entity[`major_end_d${ax1}`];

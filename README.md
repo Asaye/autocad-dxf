@@ -59,7 +59,11 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- New entities (```AcDbTable```, ```AcDbRevolvedSurface```, ```AcDbLoftedSurface```, ```AcDbSweptSurface``` and ```AcDbExtrudedSurface```) are added.
+- Two new functions ```triangulate``` and ```area``` are added.
+- New properties (```area```, ```area_sector```, ```circumference```, ```arc_length```) are added to ```AcDbCircle```.
+- New properties (```area```, ```area_sector```, ```area_full```, ```start_angle2```, ```end_angle2```) are added to ```AcDbEllipse```.
+- New property (```length```) is added to ```AcDbLine```.
+
 # Constructor
 
 The constructor of the ```Entities``` class takes two parameters. 
@@ -121,56 +125,247 @@ console.log(res.CODES); // list of all keys along with the descriptions and
 
 The following built-in functions can be called on the object of ```Entities``` class.
 
-#### &#x1F537; filter(criteria :object [, entities :Array, plane :string]): 
+#### &#x1F537; triangulate(vertices :array [, plane :string]): 
 
-This function is used to filter entities based on a certain criteria. An array of entities can be those which are read from the DXF file or provided as a second parameter. It returns an array of filtered entities. 
+This function is used to triangulate closed or closable (non-straight) polylines (polygons); i.e., to subdivide the polygon into a set of triangles. It takes an array of vertices of a polyline as a first parameter. Each element of the array needs to have a form of (for example in ```x-y``` plane): ```{x:123.456, y:789.012}```. 
+The function returns a two-dimensional array where each internal array contains the coordinates of the three corners of a triangle. 
 
-The <code>criteria</code> parameter has the following properties
-
-Property | Type | Description
------- | ----- |  ---------
-[etype] | array | The set of entity types to be filtered. The possible values for the elements of the array are: <code>line</code>,<code>mline</code>,<code>circle</code>,<code>polyline</code>,<code>dimension</code>,<code>text</code>,<code>mtext</code>,<code>spline</code>,<code>ellipse</code>,<code>arc</code>. If not given, all entity types are considered.
-[layer] | array | An array of strings (layer names) to filter from.
-[color] | string/number | A string (```ByBlock``` or ```ByLayer```) or a number from 0 to 256 representing AutoCAD color number.
-[visibility] | string | A string (```visible``` or ```invisible```).
-[line_type] | string | A string representing the line type.
-[text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (<code>&&</code> or <code>\|\|</code>) to use while combining the filters. If the value of ```operator``` property is ```or``` or <code>\|\|</code>, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
-[between] | object | The bounding coordinates of the entities to be filtered. It has six optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code>,<code>ymax</code>,<code>zmin</code> and <code>zmax</code>. The default value for <code>xmin</code>, <code>ymin</code> and <code>zmin</code> is <code>-Infinity</code>. The default value for <code>xmax</code>, <code>ymax</code> and <code>zmax</code> is <code>Infinity</code>.
-[radius] | number | A radius value, if the <code>etype</code> propery contains <code>circle</code> or <code>arc</code>.
-[arc] | object | The degree of the arc and the unit of the arc angle if the <code>etype</code> propery contains <code>arc</code>. It contains two properties <code>angle</code> which is a number representing the arc angle and <code>unit</code> which is a string which can be either <code>radians</code> or <code>degrees</code>.
-[nsides] | object | A comparison for the number of sides of the entities to be filtered. It contains two properties <code>value</code> and <code>comparison</code>. The <code>value</code> property contains the numerical value of the number of sides to compare and its default value is 1. Whereas <code>comparison</code> is a string which can be one of <code>eq</code> for equal to, <code>gt</code> for greater than, <code>gte</code> for greater than or equal to (default value), <code>lt</code> for less than, <code>lte</code> for less than, <code>ne</code> for not equal to. This property is applicable for polygons (<code>AcDbPolyline</code>) only.
-
-The optional <code>entities</code> parameter can be part or the whole of ```entities``` property or a custom made list of entities (json) with keys from this [list](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json).
-The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
-Filter lines and texts on layers 'dims' and 'titles';
+A simple example to triangulate a square.
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
 	
 	const res = new Entities(data);
-	const filtered = res.filter({
-		etype: ["line", "text"], 
-		layer: ["dims", "texts"]
-	});
+	const polyline = {
+		etype: 'LWPOLYLINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbPolyline',
+		number_of_vertices: 4,
+		type: 'Closed',
+		vertices: [
+			{ x: -347.6186932202399, y: 1722.451518092545 },
+			{ x: -247.6186932202399, y: 1722.451518092545 },
+			{ x: -247.6186932202399, y: 1622.451518092544 },
+			{ x: -347.6186932202399, y: 1622.451518092544 }
+		]
+	};
 	
-	console.log(filtered);
+	const triangles = res.triangulate(polyline.vertices);
+	
+	console.log(triangles);  
+	/* The output is: (the two triangles on each side of the diagonal)
+	    [
+		  [
+			{ x: -347.6186932202399, y: 1722.451518092545 },
+			{ x: -247.6186932202399, y: 1722.451518092545 },
+			{ x: -247.6186932202399, y: 1622.451518092544 }
+		  ],
+		  [
+			{ x: -347.6186932202399, y: 1722.451518092545 },
+			{ x: -247.6186932202399, y: 1622.451518092544 },
+			{ x: -347.6186932202399, y: 1622.451518092544 }
+		  ]
+		] 
+	*/
 ```
 
+#### &#x1F537; area(entity :object [, plane :string]): 
+
+This function is used to calculate the area of ```polylines```, ```circles```, ```arcs```, ```ellipses``` and elliptical arcs. 
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+
 ### Example
-Filter all texts which contain the string "2nd" OR which end with the string "floor" (case insensitive);
+Get the area of a circular arc.
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
 	
 	const res = new Entities(data);
-	const filtered = res.filter({
-		text: {contains: "2nd", ends: "floor", operator: "or", i: true}
-	});
+	const arc = {
+		  etype: 'ARC',
+		  line_type: 'ByLayer',
+		  color: 'ByLayer',
+		  layer: 'Layer1',
+		  subclass: 'AcDbCircle',
+		  x: 3645.17968042402,
+		  y: -390.706985299347,
+		  z: 0,
+		  radius: 222.3692867624095,		  
+		  specific_type: 'AcDbArc',
+		  start_angle: 98.67744913656281,
+		  end_angle: 285.3692815173683
+	};
+
+	const area = res.area(arc);
 	
-	console.log(filtered);
+	console.log(area);
+	// output: { area: 83441.5993081676, area_sector: 80560.52660686847 }
 ```
+
+#### &#x1F537; length(entity :object [, plane :string]): 
+
+This function is used to determine the length of an entity as described below. 
++ If ```entity``` is a line/circle/arc, the length/circumference/arc length of the line/circle/arc will be returned.
++ If ```entity``` is a polyline, the sum of the lengths of each sides of the polyline will be returned.
++ If ```entity``` is a full ellipse, an approximate circumference of the ellipse using Ramanujan's second formula will be returned.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the circumference of a circle.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const length = res.length(circle);
+	
+	console.log(length);  // prints 1037.2865715091436
+```
+
+#### &#x1F537; distance(entity1 :object, entity2 :object [, plane :string]): 
+
+This function is used to determine the shortest distance between two entities: ```entity1``` and ```entity2``` as described below. Both or one of these entities can be a one-dimensional array with a format of: ```[x, y]```.
++ If both  ```entity1``` and ```entity2``` are points (```AcDbPoint```) or texts(```AcDbText/AcDbMText```) or vertices(```AcDbVertex```) or arrays  or any combination of these, the distance between the two points will be returned.
++ If both  ```entity1``` and ```entity2``` are circles or arcs or ellipses or any combination of these, the distance between the centers will be returned.
++ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a line, the perpendicular distance between the point/center to (extension of) the line will be returned.
++ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a polyline, the perpendicular distance between the point/center to (extension of) the closest edge will be returned.
++ If both  ```entity1``` or ```entity2``` are lines which are parallel, the perpendicular distance between (extensions of) the lines will be returned. If the lines are not parallel, ```undefined``` is returned.
++ If the passed parameters are none of the above combinations, ```undefined``` is returned.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the closest distance between a circle and a line.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = {
+		etype: 'LINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbLine',
+		start_x: 76.48716497852402,
+		start_y: -120.4229218048302,
+		start_z: 0,
+		end_x: 888.3252621940712,
+		end_y: -29.22024472584008,
+		end_z: 0
+	};
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const distance = res.distance(line, circle);
+	
+	console.log(distance);  // prints 575.4826584729997
+```
+
+#### &#x1F537; closest(entity :object, [etype :array], [mode :string], [list :array]): 
+
+This function is used to obtain the closest entity to a given ```entity``` which is passed as the first parameter. It is applicable for points (```AcDbPoint```), circles(```AcDbCircle```), ellipses (```AcDbEllipse```), texts (```AcDbText``` or ```AcDbMText```), dimension lines (```AcDbDimension```), lines (```AcDbLine```), polylines (```AcDbPolyline```) and splines [where control points are used] (```AcDbSpline```).
+The optional second parameter, ```etype```, is an array parameter which can be used to specify the list of possible types of entities which need to be considered while obtaining the closest entity. The possible values for the elements of ```etype``` array are: <code>point</code>, <code>line</code>, <code>mline</code>, <code>circle</code>, <code>polyline</code>, <code>dimension</code>, <code>text</code>, <code>mtext</code>, <code>spline</code>, <code>ellipse</code>, <code>arc</code>. If this parameter is not provided, any type of entity which is closest to the given ```entity``` parameter will be returned. 
+The optional third parameter is used to define the mode of distance calculation for the determination of the closest entity. The possible values are:
++ ```center``` - (default value) - to determine the closest entity based on distances from a center point, (for lines, splines and polylines, end points or corner points to the center of the given entity will be determined)
++ ```end``` - to determine the closest entity based on distances from end point/s, 
++ ```corner``` - to determine the closest entity based on distances from corner points and 
++ ```perpendicular``` - to determine the closest entity based on perpendicular distances  (for lines, splines and polylines, end points or corner points to the given entity in terms of perpendicular distance will be determined)
+ 
+The optional fourth parameter is used to define the set of entities from which the closest entity is sought from. It should be an array of entities. If not given, the ```entities``` property ( which contains the list of entities collected from the dxf text) of the object of ```Entities``` class will be used. 
+
+### Example
+Get the closest all types of texts to one of the ends of a given line (say the line is the first element of ```entities``` array).
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = res.entities[0];
+	
+	const closest = res.closest(line, ["text", "mtext"], "end");
+	
+	console.log(closest);  
+```
+
+
+#### &#x1F537; intersection(entity1 :object, entity2 :object [, plane :string]): 
+
+This function is used to determine the intersection point/s of two entities: ```entity1``` and ```entity2```. The return type is an array of intersection points with each element of the form ```{x: 123.45, y: 678.90}```. If there is no intersection point, an empty array will be returned. The ```entity1``` and ```entity2``` parameters can be a combination of (both ways): 
++ ```line``` and ```line/polyline/circle/arc/ellipse```.
++ ```circle/arc``` and ```polyline/circle/arc```.
+
+The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the intersection points of a circle and a line.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const line = {
+		etype: 'LINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbLine',
+		start_x: 13.51291280096347,
+		start_y: 440.1406350864196,
+		start_z: 0,
+		end_x: 825.3510100165108,
+		end_y: 531.3433121654098,
+		end_z: 0
+	};
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 493.8669949609207,
+		y: 505.568641983396,
+		z: 0,
+		radius: 165.089285258525
+	};
+	const intersection = res.intersection(line, circle);
+	
+	console.log(intersection);  
+	/* The output is: (giving the two intersection points)
+	    [
+           { x: 658.8050488328336, y: 512.6333777970402 },
+           { x: 331.47271794408545, y: 475.8605471378831 }
+        ] 
+	*/
+```
+
 
 #### &#x1F537; getCorners(entity :object [, plane :string]): 
 
@@ -245,162 +440,58 @@ Check if the first and the second elements of the ```entities``` property of the
 	console.log(areEccentric);
 ```
 
-#### &#x1F537; distance(entity1 :object, entity2 :object [, plane :string]): 
+#### &#x1F537; filter(criteria :object [, entities :Array, plane :string]): 
 
-This function is used to determine the shortest distance between two entities: ```entity1``` and ```entity2``` as described below. Both or one of these entities can be a one-dimensional array with a format of: ```[x, y]```.
-+ If both  ```entity1``` and ```entity2``` are points (```AcDbPoint```) or texts(```AcDbText/AcDbMText```) or vertices(```AcDbVertex```) or arrays  or any combination of these, the distance between the two points will be returned.
-+ If both  ```entity1``` and ```entity2``` are circles or arcs or ellipses or any combination of these, the distance between the centers will be returned.
-+ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a line, the perpendicular distance between the point/center to (extension of) the line will be returned.
-+ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a polyline, the perpendicular distance between the point/center to (extension of) the closest edge will be returned.
-+ If both  ```entity1``` or ```entity2``` are lines which are parallel, the perpendicular distance between (extensions of) the lines will be returned. If the lines are not parallel, ```undefined``` is returned.
-+ If the passed parameters are none of the above combinations, ```undefined``` is returned.
+This function is used to filter entities based on a certain criteria. An array of entities can be those which are read from the DXF file or provided as a second parameter. It returns an array of filtered entities. 
 
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+The <code>criteria</code> parameter has the following properties
+
+Property | Type | Description
+------ | ----- |  ---------
+[etype] | array | The set of entity types to be filtered. The possible values for the elements of the array are: <code>line</code>,<code>mline</code>,<code>circle</code>,<code>polyline</code>,<code>dimension</code>,<code>text</code>,<code>mtext</code>,<code>spline</code>,<code>ellipse</code>,<code>arc</code>. If not given, all entity types are considered.
+[layer] | array | An array of strings (layer names) to filter from.
+[color] | string/number | A string (```ByBlock``` or ```ByLayer```) or a number from 0 to 256 representing AutoCAD color number.
+[visibility] | string | A string (```visible``` or ```invisible```).
+[line_type] | string | A string representing the line type.
+[text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (<code>&&</code> or <code>\|\|</code>) to use while combining the filters. If the value of ```operator``` property is ```or``` or <code>\|\|</code>, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
+[between] | object | The bounding coordinates of the entities to be filtered. It has six optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code>,<code>ymax</code>,<code>zmin</code> and <code>zmax</code>. The default value for <code>xmin</code>, <code>ymin</code> and <code>zmin</code> is <code>-Infinity</code>. The default value for <code>xmax</code>, <code>ymax</code> and <code>zmax</code> is <code>Infinity</code>.
+[radius] | number | A radius value, if the <code>etype</code> propery contains <code>circle</code> or <code>arc</code>.
+[arc] | object | The degree of the arc and the unit of the arc angle if the <code>etype</code> propery contains <code>arc</code>. It contains two properties <code>angle</code> which is a number representing the arc angle and <code>unit</code> which is a string which can be either <code>radians</code> or <code>degrees</code>.
+[nsides] | object | A comparison for the number of sides of the entities to be filtered. It contains two properties <code>value</code> and <code>comparison</code>. The <code>value</code> property contains the numerical value of the number of sides to compare and its default value is 1. Whereas <code>comparison</code> is a string which can be one of <code>eq</code> for equal to, <code>gt</code> for greater than, <code>gte</code> for greater than or equal to (default value), <code>lt</code> for less than, <code>lte</code> for less than, <code>ne</code> for not equal to. This property is applicable for polygons (<code>AcDbPolyline</code>) only.
+
+The optional <code>entities</code> parameter can be part or the whole of ```entities``` property or a custom made list of entities (json) with keys from this [list](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json).
+The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
-Get the closest distance between a circle and a line.
+Filter lines and texts on layers 'dims' and 'titles';
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
 	
 	const res = new Entities(data);
-	const line = {
-		etype: 'LINE',
-		line_type: 'ByLayer',
-		color: 'ByLayer',
-		layer: 'Layer1',
-		subclass: 'AcDbLine',
-		start_x: 76.48716497852402,
-		start_y: -120.4229218048302,
-		start_z: 0,
-		end_x: 888.3252621940712,
-		end_y: -29.22024472584008,
-		end_z: 0
-	};
-	const circle = {
-		etype: 'CIRCLE',
-		line_type: 'ByLayer',
-		color: 'ByLayer',
-		layer: 'Layer1',
-		subclass: 'AcDbCircle',
-		x: 493.8669949609207,
-		y: 505.568641983396,
-		z: 0,
-		radius: 165.089285258525
-	};
-	const distance = res.distance(line, circle);
+	const filtered = res.filter({
+		etype: ["line", "text"], 
+		layer: ["dims", "texts"]
+	});
 	
-	console.log(distance);  // prints 575.4826584729997
+	console.log(filtered);
 ```
 
-#### &#x1F537; length(entity :object [, plane :string]): 
-
-This function is used to determine the length of an entity as described below. 
-+ If ```entity``` is a line/circle/arc, the length/circumference/arc length of the line/circle/arc will be returned.
-+ If ```entity``` is a polyline, the sum of the lengths of each sides of the polyline will be returned.
-+ If ```entity``` is a full ellipse, an approximate circumference of the ellipse using Ramanujan's second formula will be returned.
-
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
-
 ### Example
-Get the circumference of a circle.
+Filter all texts which contain the string "2nd" OR which end with the string "floor" (case insensitive);
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
 	
 	const res = new Entities(data);
+	const filtered = res.filter({
+		text: {contains: "2nd", ends: "floor", operator: "or", i: true}
+	});
 	
-	const circle = {
-		etype: 'CIRCLE',
-		line_type: 'ByLayer',
-		color: 'ByLayer',
-		layer: 'Layer1',
-		subclass: 'AcDbCircle',
-		x: 493.8669949609207,
-		y: 505.568641983396,
-		z: 0,
-		radius: 165.089285258525
-	};
-	const length = res.length(circle);
-	
-	console.log(length);  // prints 1037.2865715091436
+	console.log(filtered);
 ```
 
-#### &#x1F537; intersection(entity1 :object, entity2 :object [, plane :string]): 
 
-This function is used to determine the intersection point/s of two entities: ```entity1``` and ```entity2```. The return type is an array of intersection points with each element of the form ```{x: x_value, y: y_value}```. If there is no intersection point, an empty array will be returned. The ```entity1``` and ```entity2``` parameters can be a combination of (both ways): 
-+ ```line``` and ```line/polyline/circle/arc/ellipse```.
-+ ```circle/arc``` and ```polyline/circle/arc```.
-
-The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
-
-### Example
-Get the intersection points of a circle and a line.
-```
-	const Entities = require("autocad-dxf");
-	const data = "DATA_FROM_DXF_FILE";
-	
-	const res = new Entities(data);
-	const line = {
-		etype: 'LINE',
-		line_type: 'ByLayer',
-		color: 'ByLayer',
-		layer: 'Layer1',
-		subclass: 'AcDbLine',
-		start_x: 13.51291280096347,
-		start_y: 440.1406350864196,
-		start_z: 0,
-		end_x: 825.3510100165108,
-		end_y: 531.3433121654098,
-		end_z: 0
-	};
-	const circle = {
-		etype: 'CIRCLE',
-		line_type: 'ByLayer',
-		color: 'ByLayer',
-		layer: 'Layer1',
-		subclass: 'AcDbCircle',
-		x: 493.8669949609207,
-		y: 505.568641983396,
-		z: 0,
-		radius: 165.089285258525
-	};
-	const intersection = res.intersection(line, circle);
-	
-	console.log(intersection);  
-	/* The output is: (giving the two intersection points)
-	    [
-           { x: 658.8050488328336, y: 512.6333777970402 },
-           { x: 331.47271794408545, y: 475.8605471378831 }
-        ] 
-	*/
-```
-
-#### &#x1F537; closest(entity :object, [etype :array], [mode :string], [list :array]): 
-
-This function is used to obtain the closest entity to a given ```entity``` which is passed as the first parameter. It is applicable for points (```AcDbPoint```), circles(```AcDbCircle```), ellipses (```AcDbEllipse```), texts (```AcDbText``` or ```AcDbMText```), dimension lines (```AcDbDimension```), lines (```AcDbLine```), polylines (```AcDbPolyline```) and splines [where control points are used] (```AcDbSpline```).
-The optional second parameter, ```etype```, is an array parameter which can be used to specify the list of possible types of entities which need to be considered while obtaining the closest entity. The possible values for the elements of ```etype``` array are: <code>point</code>, <code>line</code>, <code>mline</code>, <code>circle</code>, <code>polyline</code>, <code>dimension</code>, <code>text</code>, <code>mtext</code>, <code>spline</code>, <code>ellipse</code>, <code>arc</code>. If this parameter is not provided, any type of entity which is closest to the given ```entity``` parameter will be returned. 
-The optional third parameter is used to define the mode of distance calculation for the determination of the closest entity. The possible values are:
-+ ```center``` - (default value) - to determine the closest entity based on distances from a center point, (for lines, splines and polylines, end points or corner points to the center of the given entity will be determined)
-+ ```end``` - to determine the closest entity based on distances from end point/s, 
-+ ```corner``` - to determine the closest entity based on distances from corner points and 
-+ ```perpendicular``` - to determine the closest entity based on perpendicular distances  (for lines, splines and polylines, end points or corner points to the given entity in terms of perpendicular distance will be determined)
- 
-The optional fourth parameter is used to define the set of entities from which the closest entity is sought from. It should be an array of entities. If not given, the ```entities``` property ( which contains the list of entities collected from the dxf text) of the object of ```Entities``` class will be used. 
-
-### Example
-Get the closest all types of texts to one of the ends of a given line (say the line is the first element of ```entities``` array).
-```
-	const Entities = require("autocad-dxf");
-	const data = "DATA_FROM_DXF_FILE";
-	
-	const res = new Entities(data);
-	const line = res.entities[0];
-	
-	const closest = res.closest(line, ["text", "mtext"], "end");
-	
-	console.log(closest);  
-```
 
 
 ## Issues or suggestions?
