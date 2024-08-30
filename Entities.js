@@ -638,6 +638,9 @@ const Entities = class {
 				json = {};
 				this.insertEntity(code, value, json);
 			} else if (code == "0" && json && json.subclass == "AcDb3dPolyline" && value == "SEQEND") {
+				if (json2 && json.hasOwnProperty('vertices') && Array.isArray(json.vertices)) {
+					json.vertices.push(json2);
+				}
 				if (json) this.entities.push(json);
 				json = {};
 				json2 = undefined;
