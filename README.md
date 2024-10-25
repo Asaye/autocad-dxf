@@ -175,7 +175,7 @@ A simple example to triangulate a square.
 
 #### &#x1F537; nurbs(spline :object): 
 
-This function is used to obtain a NURBS (B-Spline) equation of ```AcDbSpline``` of degree three. The function uses the combination of the values of ```control_points```, ```knot_values``` and ```weights``` properties to determine the equations. If the ```weights``` property is not given or if all its elements are of value 1, equations of the B-spline curves will be obtained. Along with, the length and area of the NURBS/splines for each respective interval will also be returned. The length and area of the splines are determined using 64-point Gauss-quadrature numerical integration.
+This function is used to obtain the equations of NURBS (B-Spline) for ```AcDbSpline``` of degree three. The function uses the combination of the values of ```control_points```, ```knot_values``` and ```weights``` properties to determine the equations. If the ```weights``` property is not given or if all its elements are of value 1, equations of the B-spline curves will be obtained. Along with, the length and area of the NURBS/splines for each respective interval will also be returned. The length and area of the splines are determined using 64-point Gauss-quadrature numerical integration.
  
 See the example below for the type of returned data. 
 
