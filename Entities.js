@@ -3,9 +3,11 @@ const Length = require("./Length");
 const Intersection = require("./Intersection");
 const Closest = require("./Closest");
 const Triangulate = require("./Triangulate");
+const BSpline = require("./BSpline");
 const Area = require("./Area");
 const Connected = require("./Connected");
 const Crossing = require("./Crossing");
+const Tangent = require("./Tangent");
 const ErrorMessages = require("./ErrorMessages.json");
 const DIMSTYLE_CODES = require("./DIMSTYLE_CODES.json");
 const KEYS = require("./KEYS");
@@ -791,6 +793,9 @@ const Entities = class {
 			} else if (json.subclass == "AcDbRasterImage") {
 				if (!json.v_vector) json.v_vector = [];
 				json.v_vector.push({x: parseFloat(value)});
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.start_tangent) json.start_tangent = {};
+				json.start_tangent.x = parseFloat(value);
 			} 				
 		} else if (code == "13") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
@@ -810,6 +815,9 @@ const Entities = class {
 				}
 			} else if (json.subclass == "AcDbRasterImage") {
 				json.u_value = parseFloat(value);  
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.end_tangent) json.end_tangent = {};
+				json.end_tangent.x = parseFloat(value);
 			} 
 		} else if (code == "14") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
@@ -901,7 +909,10 @@ const Entities = class {
 				json.axis_vector[json.axis_vector.length - 1]["y"] = parseFloat(value);
 			} else if (json.subclass == "AcDbRasterImage") {
 				json.v_vector[json.v_vector.length - 1]["y"] = parseFloat(value);
-			} 
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.start_tangent) json.start_tangent = {};
+				json.start_tangent.y = parseFloat(value);
+			}  
 		} else if (code == "23") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
 				json.ext_line1_y = parseFloat(value);  
@@ -921,6 +932,9 @@ const Entities = class {
 				}
 			} else if (json.subclass == "AcDbRasterImage") {
 				json.v_value = parseFloat(value);  
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.end_tangent) json.end_tangent = {};
+				json.end_tangent.y = parseFloat(value);
 			} 
 		} else if (code == "24") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
@@ -1012,6 +1026,9 @@ const Entities = class {
 				json.axis_vector[json.axis_vector.length - 1]["z"] = parseFloat(value);
 			} else if (json.subclass == "AcDbRasterImage") {
 				json.v_vector[json.v_vector.length - 1]["z"] = parseFloat(value);
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.start_tangent) json.start_tangent = {};
+				json.start_tangent.z = parseFloat(value);
 			} 
 		} else if (code == "33") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
@@ -1030,6 +1047,9 @@ const Entities = class {
 						break;
 					}
 				}
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.end_tangent) json.end_tangent = {};
+				json.end_tangent.z = parseFloat(value);
 			} 
 		} else if (code == "34") {
 			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
@@ -1131,6 +1151,9 @@ const Entities = class {
 			} else if (json.subclass == "AcDbMline") {
 				if (!json.element_params) json.element_params = [];
 				json.element_params.push({x: parseFloat(value)});
+			} else if (json.subclass == "AcDbSpline") {
+				if (!json.weights) json.weights = [];
+				json.weights.push(parseFloat(value));
 			} else if (json.subclass == "AcDbHatch") {
 				json.pattern_scale = parseFloat(value);  
 			} else if (json.subclass == "AcDbBlockReference") {
@@ -2203,6 +2226,10 @@ const Entities = class {
 		return Triangulate(vertices, plane, this.getAxes, this.tolerance);
 	}
 	
+	nurbs = (spline)  => {
+		return BSpline(spline);
+	}
+	
 	area = (entity, plane)  => {
 		return Area(entity, plane, this.getAxes, this.tolerance);
 	}
@@ -2213,6 +2240,14 @@ const Entities = class {
 	
 	crossing = (entity, etypes, plane)  => {
 		return Crossing(entity, etypes, plane, this.entities, this.getAxes, this.tolerance);
+	}
+	
+	istangent = (line, circle, plane)  => {
+		return Tangent.istangent(line, circle, plane, this.getAxes, this.tolerance);
+	}
+	
+	tangent = (circle, angle, length, plane)  => {
+		return Tangent.tangent(circle, angle, length, plane, this.getAxes, this.tolerance);
 	}
 }
 	

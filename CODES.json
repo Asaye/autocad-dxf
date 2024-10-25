@@ -441,10 +441,17 @@
 		"10": "control_points.x",          // the x coordinate of a control point
 		"20": "control_points.y",          // the y coordinate of a control point
 		"11": "fit_points.x",              // the x coordinate of a fit point
+		"12": "start_tangent.x",           // the x value of start tangent direction vector
+		"13": "end_tangent.x",             // the x value of end tangent direction vector
 		"21": "fit_points.y",              // the y coordinate of a fit point
+		"22": "start_tangent.y",           // the y value of start tangent direction vector
+		"23": "end_tangent.y",             // the y value of end tangent direction vector
 		"30": "control_points.z",          // the z coordinate of a control point
 		"31": "fit_points.z",              // the z coordinate of a fit point
+		"32": "start_tangent.z",           // the z value of start tangent direction vector
+		"33": "end_tangent.z",             // the z value of end tangent direction vector
 		"40": "knot_values",               // array of knot values
+		"41": "weights",                   // array of weights
 		"48": "line_scale",                // line type scale
 		"60": "visibility",                // object visibility
 		"62": "color",                     // color number, 0 = ByBlock, 256 = ByLayer

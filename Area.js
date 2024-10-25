@@ -1,4 +1,5 @@
 const Triangulate = require("./Triangulate");
+const BSpline = require("./BSpline");
 const ErrorMessages = require("./ErrorMessages.json");
 
 module.exports = (entity, plane, getAxes, tolerance) => {
@@ -61,6 +62,9 @@ module.exports = (entity, plane, getAxes, tolerance) => {
 			json.area_full = Math.PI*a*b;
 		}
 		return json;
+	} else if (etype == "AcDbSpline") {	
+		const result = BSpline(entity);
+		return {area: result.area }  //Approximate
 	}
 	return {};		
 };

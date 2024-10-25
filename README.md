@@ -59,10 +59,9 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- Two new functions ```triangulate``` and ```area``` are added.
-- New properties (```area```, ```area_sector```, ```circumference```, ```arc_length```) are added to ```AcDbCircle```.
-- New properties (```area```, ```area_sector```, ```area_full```, ```start_angle2```, ```end_angle2```) are added to ```AcDbEllipse```.
-- New property (```length```) is added to ```AcDbLine```.
+- Five new functions ```connected```, ```crossing```, ```tangent```, ```istangent``` and ```nurbs``` are added.
+- ```weights```, ```start_tangent``` and ```end_tangent``` properties are added to ```AcDbSpline```.
+- The ```length``` and ```area``` functions have new functionalities to calculate spline lengths and areas respectively.
 
 # Constructor
 
@@ -174,9 +173,69 @@ A simple example to triangulate a square.
 	*/
 ```
 
+#### &#x1F537; nurbs(spline :object): 
+
+This function is used to obtain a NURBS (B-Spline) equation of ```AcDbSpline``` of degree three. The function uses the combination of the values of ```control_points```, ```knot_values``` and ```weights``` properties to determine the equations. If the ```weights``` property is not given or if all its elements are of value 1, equations of the B-spline curves will be obtained. Along with, the length and area of the NURBS/splines for each respective interval will also be returned. The length and area of the splines are determined using 64-point Gauss-quadrature numerical integration.
+ 
+See the example below for the type of returned data. 
+
+### Example
+
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);
+	const spline = {
+		etype: 'SPLINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbSpline',
+		type: 'Planar',
+		degree_of_curve: 3,
+		number_of_knots: 10,
+		number_of_control_points: 6,
+		number_of_fit_points: 4,
+		start_tangent: { x: -1, y: 0, z: 0 },
+		knot_values: [
+			0,
+			0,
+			0,
+			0,
+			638.3901689459577,
+			1276.780337891915,
+			2227.985036856916,
+			2227.985036856916,
+			2227.985036856916,
+			2227.985036856916
+		],
+		control_points: [
+			{ x: 4817.439144962657, y: -135.1812993643543, z: 0 },
+			{ x: 4604.64242198067, y: -135.1812993643543, z: 0 },
+			{ x: 4672.382692425447, y: 1016.8200288123, z: 0 },
+			{ x: 4756.261548986535, y: -682.6540970671565, z: 0 },
+			{ x: 5268.432815474485, y: 19.81275821550565, z: 0 },
+			{ x: 5574.913243407952, y: 440.1650046279319, z: 0 }
+		],
+		fit_points: [
+			{ x: 4817.439144962657, y: -135.1812993643543, z: 0 },
+			{ x: 4667.464634920965, y: 485.3423940951325, z: 0 },
+			{ x: 4817.439144962657, y: -135.1812993643543, z: 0 },
+			{ x: 5574.913243407952, y: 440.1650046279319, z: 0 }
+		]
+	};
+	
+	const spline_data = res.nurbs(spline);
+	
+	console.log(spline_data); 
+	
+``` 
+The output for this example can be found [here](https://github.com/Asaye/autocad-dxf/blob/main/spline_output.json).
+
 #### &#x1F537; area(entity :object [, plane :string]): 
 
-This function is used to calculate the area of ```polylines```, ```circles```, ```arcs```, ```ellipses``` and elliptical arcs. 
+This function is used to calculate the area of ```polylines```, ```circles```, ```arcs```, ```splines```, ```ellipses``` and elliptical arcs. 
 The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 
@@ -211,7 +270,7 @@ Get the area of a circular arc.
 #### &#x1F537; length(entity :object [, plane :string]): 
 
 This function is used to determine the length of an entity as described below. 
-+ If ```entity``` is a line/circle/arc, the length/circumference/arc length of the line/circle/arc will be returned.
++ If ```entity``` is a line/circle/arc/spline, the length/circumference/arc length of the line/circle/arc/spline will be returned.
 + If ```entity``` is a polyline, the sum of the lengths of each sides of the polyline will be returned.
 + If ```entity``` is a full ellipse, an approximate circumference of the ellipse using Ramanujan's second formula will be returned.
 
@@ -409,6 +468,149 @@ Get the all lines and circles which are crossing the to the first element of ```
 	const crossing = res.crossing(res.entities[0], ["line", "circle"]);
 	
 	console.log(crossing);
+```
+
+#### &#x1F537; istangent(line: object, circle :object [, plane :string]): 
+
+This function is used to check if a ```line``` (provided as the first parameter) is tangent to a ```circle``` (provided as the second parameter). The function returns ```true``` if the ```line``` is tangent to the ```circle``` or ```false``` otherwise.
+
+The optional third parameter <code>plane</code> specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Check if a line object is tangent to a circle.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);	
+	const line = {
+		etype: 'LINE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbLine',
+		start_x: 1108.068045643199,
+		start_y: -123.0727371516945,
+		start_z: 0,
+		end_x: 1486.826993488496,
+		end_y: 20.28428544742638,
+		end_z: 0,
+		length: 404.98095819601366
+	};
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 1343.469968505544,
+		y: 399.0432280054415,
+		z: 0,
+		radius: 404.9809540949161,
+		area: 515251.2702195186,
+		circumference: 2544.5703804567474
+	};
+	const istangent = res.istangent(line, circle);
+	
+	console.log(istangent);   // returns true
+```
+
+#### &#x1F537; tangent(circle: object, point: array [, plane :string]): 
+
+This function is used to obtain the possible points of tangency on a ```circle``` (provided as the first parameter) for lines which start from or pass through a ```point``` (provided as the second parameter). The ```point``` parameter is an array of the two coordinates of the```point``` as specified by the third parameter (```plane```). See below for details. For example, a ```point``` value of ```[123.00, 456.00]``` without specifying the third coordinate means the point from where we want to generate the tangen has an x-coordinate of 123.00 and y-coordinate of 456.00.
+
+The function returns an array of coordinate objects for the points of tangency along with the angle of the line connecting the circle center and the point of tangency from the + x-axis (in radians).
+
+The optional third parameter <code>plane</code> specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the two points of tangency for lines which pass through a given point.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);	
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 1343.469968505544,
+		y: 399.0432280054415,
+		z: 0,
+		radius: 404.9809540949161,
+		area: 515251.2702195186,
+		circumference: 2544.5703804567474
+	};
+	
+	const tp = res.tangent(circle, [1343.469968505544, 1051.487343584355]);
+	console.log(tp);
+	
+	/* output:
+	[
+		{
+			x: 1660.9901692001076,
+			y: 650.4204253215717,
+			angle: 0.669652572129677
+		},
+		{
+			x: 1025.9497678109806,
+			y: 650.4204253215717,
+			angle: 2.471940081460116
+		}
+	]
+	*/
+```
+
+#### &#x1F537; tangent(circle: object, angle: number, length: number [, plane :string]): 
+
+This function is used to obtain the tangent lines of a specified ```length``` to a ```circle``` from a point of tangency forming an ```angle``` (in radians) from the + x-axis.
+
+The function returns an array of line objects (with ```start_x```, ```start_y```, ```start_z```, ```end_x```, ```end_y```, ```end_z``` as keys) representing the tangents.
+
+The optional fourth parameter <code>plane</code> specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
+
+### Example
+Get the tangents with a length of 100 from a point of tangency which makes a given angle from + x-axis.
+```
+	const Entities = require("autocad-dxf");
+	const data = "DATA_FROM_DXF_FILE";
+	
+	const res = new Entities(data);	
+	const circle = {
+		etype: 'CIRCLE',
+		line_type: 'ByLayer',
+		color: 'ByLayer',
+		layer: 'Layer1',
+		subclass: 'AcDbCircle',
+		x: 1343.469968505544,
+		y: 399.0432280054415,
+		z: 0,
+		radius: 404.9809540949161,
+		area: 515251.2702195186,
+		circumference: 2544.5703804567474
+	};
+	
+	const tangents = res.tangent(circle, 0.669652572129677, 100);
+	console.log(tangents);
+	
+	/* output:
+		[
+			{
+				start_x: 1660.9901692001076,
+				start_y: 650.4204253215717,
+				end_x: 1723.0615320072616,
+				end_y: 572.0166886806273
+			},
+			{
+				start_x: 1660.9901692001076,
+				start_y: 650.4204253215717,
+				end_x: 1598.9188063929537,
+				end_y: 728.824161962516
+			}
+		]	
+	*/
 ```
 
 #### &#x1F537; getCorners(entity :object [, plane :string]): 

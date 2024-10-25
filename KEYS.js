@@ -12,7 +12,7 @@ module.exports = {
 	"AcDbMtext": ["layer", "etype", "subclass", "line_type", "line_scale","color", "visibility",  "x", "y", "z","text", "style", "height", "rotation", "drawing_direction"],
 	"AcDbMline": ["layer", "etype", "subclass","line_scale", "color", "visibility", "justification", "start_x", "start_y", "start_z", "style_name" ,"vertices", "scale_factor", "number_of_vertices", "type"],
 	"AcDbHatch": ["layer", "etype", "subclass", "line_type", "line_scale","color", "visibility", "style_name", "fill_type", "seed_points", "pattern_scale", "pattern_angle", "gradient","pattern", "number_of_seed_points", "number_of_boundary_paths", "number_of_lines", "style", "associative"],
-	"AcDbSpline": ["layer", "etype", "subclass","line_scale", "color", "visibility",  "control_points", "fit_points", "knot_values", "type", "degree_of_curve" , "number_of_fit_points", "number_of_control_points", "number_of_knots"],
+	"AcDbSpline": ["layer", "etype", "subclass","line_scale", "color", "visibility",  "control_points", "fit_points", "knot_values", "weights", "start_tangent", "end_tangent", "type", "degree_of_curve" , "number_of_fit_points", "number_of_control_points", "number_of_knots"],
 	"AcDbShape": ["layer", "etype", "subclass", "line_type", "line_scale","color", "visibility",  "x", "y", "z", "style_name", "size", "rotation"],
 	"AcDbRay": ["layer", "etype", "subclass", "line_type", "line_scale","color", "visibility",  "start_x", "start_y", "start_y", "unit_direction_x", "unit_direction_y", "unit_direction_z"],
 	"AcDbFace": ["layer", "etype", "subclass", "line_type", "line_scale", "color", "visibility", "corners", "invisible_edge"],	

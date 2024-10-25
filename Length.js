@@ -1,3 +1,4 @@
+const BSpline = require("./BSpline");
 const ErrorMessages = require("./ErrorMessages.json");
 
 module.exports = (entity, plane, getAxes, tolerance) => {
@@ -55,6 +56,9 @@ module.exports = (entity, plane, getAxes, tolerance) => {
 		const h = (a - b)*(a - b)/((a + b)*(a + b));
 		
 		return Math.PI*(a + b)*(1 + 3*h/(10 + Math.sqrt(4 - 3*h)));  //Approximate
+	} else if (etype == "AcDbSpline") {	
+		const result = BSpline(entity);
+		return result.length;  //Approximate
 	}
 	return;		
 };
