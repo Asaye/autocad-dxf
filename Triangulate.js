@@ -1,3 +1,4 @@
+const CheckPointInside = require("./PolylineInside");
 const ErrorMessages = require("./ErrorMessages.json");
 
 const checkBending = (vertices, ax1, ax2, tolerance) => {	
@@ -174,7 +175,7 @@ const getVisibleCorners = (vertices, corners, ax1, ax2, tolerance) => {
 	return corners.filter((item, index) => temp.indexOf(index) == -1);
 };
 
-const checkMidPointInside = (vert, x, y, ax1, ax2) => {
+/*const CheckPointInside = (vert, x, y, ax1, ax2) => {
 	let vertices = JSON.parse(JSON.stringify(vert));
 	// Get the triangulating line	
 	
@@ -211,6 +212,7 @@ const checkMidPointInside = (vert, x, y, ax1, ax2) => {
 	return bottom % 2 != 0 && top % 2 != 0 && left % 2 != 0 && right % 2 != 0;
 	return true;
 };
+*/
 
 module.exports = (ver, plane, getAxes, tolerance) => {
 	if (!Array.isArray(ver)) {
@@ -277,7 +279,7 @@ module.exports = (ver, plane, getAxes, tolerance) => {
 						y1 = (line1[1] + line1[3])/2;
 					}
 					if (!isNaN(x1) && !isNaN(y1)) {
-						inside1 = checkMidPointInside(vertices, x1, y1, ax1, ax2);
+						inside1 = CheckPointInside(vertices, x1, y1, ax1, ax2);
 					}
 					
 					if (Math.abs(corners[i][1] - corners[i][2]) > 1 && (Math.abs(corners[i][1] - corners[i][2]) < (vertices.length - 1))) {
@@ -286,7 +288,7 @@ module.exports = (ver, plane, getAxes, tolerance) => {
 					}
 					
 					if (!isNaN(x2) && !isNaN(y2)) {
-						inside2 = checkMidPointInside(vertices, x2, y2, ax1, ax2);
+						inside2 = CheckPointInside(vertices, x2, y2, ax1, ax2);
 					}
 					
 					if (Math.abs(corners[i][0] - corners[i][2]) > 1 && (Math.abs(corners[i][0] - corners[i][2]) < (vertices.length - 1))) {
@@ -294,7 +296,7 @@ module.exports = (ver, plane, getAxes, tolerance) => {
 						y3 = (line3[1] + line3[3])/2;
 					}
 					if (!isNaN(x3) && !isNaN(y3)) {
-						inside3 = checkMidPointInside(vertices, x3, y3, ax1, ax2);
+						inside3 = CheckPointInside(vertices, x3, y3, ax1, ax2);
 					} 
 					
 					if (inside1 && inside2 && inside3) {

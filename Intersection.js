@@ -141,6 +141,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 				let json = {};
 				json[`${ax1}`] = x1;
 				json[`${ax2}`] = y0;
+				json.tangency_point = true;
 				return [json];
 			} else {
 				let ysol1 = y0 - Math.sqrt(det);
@@ -177,6 +178,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			let json = {};
 			json[`${ax1}`] = sol1;
 			json[`${ax2}`] = ysol1;
+			json.tangency_point = true;
 			points.push(json);
 		} else {
 			const sol1 = (-B + Math.sqrt(det))/(2*A);
@@ -221,7 +223,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		let m = (y2 - y1)/(x2 - x1);
 		let sol1, sol2, ysol1, ysol2;
 		let points = [];
-		
+		let p1_tangent = false;
 		if (Math.abs(m) == Infinity) {
 			const det = radius*radius - (x1 - xc)*(x1 - xc);
 			
@@ -230,6 +232,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			} else if (det == 0) {				
 				sol1 = x1;
 				ysol1 = yc;
+				p1_tangent = true;
 			} else {
 				ysol1 = yc - Math.sqrt(det);
 				ysol2 = yc + Math.sqrt(det);
@@ -250,6 +253,10 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			
 			if (det < tolerance) {
 				return [];
+			} else if (det == 0) {				
+				sol1 = -B/(2*A);
+				ysol1 = m*sol1 + b;
+				p1_tangent = true;
 			} else {
 				sol1 = (-B + Math.sqrt(det))/(2*A);
 				sol2 = (-B - Math.sqrt(det))/(2*A);
@@ -275,6 +282,9 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 				let json1 = {};
 				json1[`${ax1}`] = sol1;
 				json1[`${ax2}`] = ysol1;
+				if (p1_tangent) {
+					json1.tangency_point = true;
+				}
 				points.push(json1);
 			}
 		}
@@ -331,7 +341,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		const F = A*xc*xc + B*xc*yc + C*yc*yc - a*a*b*b;
 		let sa = entity2.start_angle;
 		let ea = entity2.end_angle;	
-		
+		let p_tangent = false;
 		if (Math.abs(m) == Infinity) {
 			const det = (B*x1 + E)*(B*x1 + E) - 4*C*(A*x1*x1 + D*x1 + F);				
 			if (det < 0) {
@@ -339,6 +349,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			} else if (det == 0) {				
 				sol1 = x1;
 				ysol1 = -(B*x1 + E)/(2*C);
+				p_tangent = true;
 			} else {
 				ysol1 = -(B*x1 + E - Math.sqrt(det))/(2*C);
 				ysol2 = -(B*x1 + E + Math.sqrt(det))/(2*C);
@@ -357,8 +368,13 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			const CC = (C*y_int*y_int + E*y_int + F);
 			const det = BB*BB - 4*AA*CC;
 			
-			if (det <= tolerance) {							
+			if (det < 0) {							
 				return [];
+			} else if (det == 0) {				
+				const b = y1 - m*x1;						
+				sol1 = -BB/(2*AA);									
+				ysol1 = m*sol1 + b;				
+				p_tangent = true;
 			} else {
 				const b = y1 - m*x1;						
 				sol1 = (-BB + Math.sqrt(det))/(2*AA);
@@ -373,6 +389,9 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 				let json1 = {};
 				json1[`${ax1}`] = sol1;
 				json1[`${ax2}`] = ysol1;
+				if (p_tangent) {
+					json1.tangency_point = true;
+				}
 				points.push(json1);
 			}
 			if ((sol2 - x1)*(sol2 - x2) < tolerance && (ysol2 - y1)*(ysol2 - y2) < tolerance) {
@@ -398,6 +417,9 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 					let json1 = {};
 					json1[`${ax1}`] = sol1;
 					json1[`${ax2}`] = ysol1;
+					if (p_tangent) {
+						json1.tangency_point = true;
+					}
 					points.push(json1);
 				}
 			}
@@ -508,6 +530,183 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			x0 = x1;
 			y0 = y1;
 		}	
+		return points;
+	}  else if ((etype1 == "AcDbCircle" && etype2 == "AcDbCircle") || (etype2 == "AcDbPolyline" && etype1 == "AcDbEllipse")) {
+		const x1 = entity1[ax1];
+		const y1 = entity1[ax2];
+		const x2 = entity2[ax1];
+		const y2 = entity2[ax2];
+		const r1 = entity1.radius;
+		const r2 = entity2.radius;
+		const R = Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		const A = (r1*r1 - r2*r2)/R/R;
+		const B = (r1*r1 + r2*r2)/R/R;
+		const det = 2*B + - A*A - 1;
+		let points = [];
+		
+		if (det < 0) {
+			return [];
+		} else if (det == 0) {
+			if (entity1.etype == "CIRCLE" && entity2.etype == "CIRCLE") {
+				const xi1 = ((x1 + x2) + A*(x2 - x1))/2;
+				const yi1 = ((y1 + y2) + A*(y2 - y1))/2;				
+				let json = {};
+				json[ax1] = xi1;
+				json[ax2] = yi1;	
+				json.tangency_point = true;				
+				return [json];
+			}
+		} else {
+			const sol1 = ((x1 + x2) + A*(x2 - x1) + Math.sqrt(det)*(y2 - y1))/2;
+			const ysol1 = ((y1 + y2) + A*(y2 - y1) + Math.sqrt(det)*(x1 - x2))/2;
+			const sol2 = ((x1 + x2) + A*(x2 - x1) - Math.sqrt(det)*(y2 - y1))/2;
+			const ysol2 = ((y1 + y2) + A*(y2 - y1) - Math.sqrt(det)*(x1 - x2))/2;
+			
+			if (entity1.etype == "CIRCLE" && entity2.etype == "CIRCLE") {				
+				let json = {}, json2 = {};
+				json[ax1] = sol1;
+				json[ax2] = ysol1;
+				json2[ax1] = sol2;
+				json2[ax2] = ysol2;
+				return [json, json2];
+			} else if (entity1.etype == "ARC" && entity2.etype != "ARC") {
+				let sa = entity1.start_angle*Math.PI/180;
+				let ea = entity1.end_angle*Math.PI/180;
+				let points = [];
+				let ang1 = Math.abs(Math.atan((ysol1 - y1)/(sol1 - x1)));					
+				if (ysol1 > y1 && sol1 < x1) {
+					ang1 = Math.PI - ang1;
+				} else if (ysol1 < y1 && sol1 < x1) {
+					ang1 = Math.PI + ang1;
+				} else if (ysol1 < y1 && sol1 > x1) {
+					ang1 = 2*Math.PI - ang1;
+				} 
+				if (((sa < ea && ((ang1 - sa)*(ang1 - ea) < tolerance)) || (sa > ea && ((ang1 - sa)*(ang1 - ea) > tolerance)))) {
+					let json1 = {};
+					json1[`${ax1}`] = sol1;
+					json1[`${ax2}`] = ysol1;						
+					points.push(json1);
+				}
+						
+				let ang2 = Math.abs(Math.atan((ysol2 - y1)/(sol2 - x1)));					
+				if (ysol2 > y1 && sol2 < x1) {
+					ang2 = Math.PI - ang2;
+				} else if (ysol2 < y1 && sol2 < x1) {
+					ang2 = Math.PI + ang2;
+				} else if (ysol2 < y1 && sol2 > x1) {
+					ang2 = 2*Math.PI - ang2;
+				} 
+				if (((sa < ea && ((ang2 - sa)*(ang2 - ea) < tolerance)) || (sa > ea && ((ang2 - sa)*(ang2 - ea) > tolerance)))) {
+					let json2 = {};
+					json2[`${ax1}`] = sol2;
+					json2[`${ax2}`] = ysol2;
+					points.push(json2);
+				}
+				
+				return points;
+			}  else if (entity1.etype != "ARC" && entity2.etype == "ARC") {
+				let sa = entity2.start_angle*Math.PI/180;
+				let ea = entity2.end_angle*Math.PI/180;
+				let points = [];
+				let ang1 = Math.abs(Math.atan((ysol1 - y2)/(sol1 - x2)));					
+				if (ysol1 > y2 && sol1 < x2) {
+					ang1 = Math.PI - ang1;
+				} else if (ysol1 < y2 && sol1 < x2) {
+					ang1 = Math.PI + ang1;
+				} else if (ysol1 < y2 && sol1 > x2) {
+					ang1 = 2*Math.PI - ang1;
+				} 
+				if (((sa < ea && ((ang1 - sa)*(ang1 - ea) < tolerance)) || (sa > ea && ((ang1 - sa)*(ang1 - ea) > tolerance)))) {
+					let json1 = {};
+					json1[`${ax1}`] = sol1;
+					json1[`${ax2}`] = ysol1;						
+					points.push(json1);
+				}
+						
+				let ang2 = Math.abs(Math.atan((ysol2 - y2)/(sol2 - x2)));					
+				if (ysol2 > y2 && sol2 < x2) {
+					ang2 = Math.PI - ang2;
+				} else if (ysol2 < y2 && sol2 < x2) {
+					ang2 = Math.PI + ang2;
+				} else if (ysol2 < y2 && sol2 > x2) {
+					ang2 = 2*Math.PI - ang2;
+				} 
+				if (((sa < ea && ((ang2 - sa)*(ang2 - ea) < tolerance)) || (sa > ea && ((ang2 - sa)*(ang2 - ea) > tolerance)))) {
+					let json2 = {};
+					json2[`${ax1}`] = sol2;
+					json2[`${ax2}`] = ysol2;
+					points.push(json2);
+				}
+				
+				return points;
+			} else {
+				let sa1 = entity1.start_angle*Math.PI/180;
+				let ea1 = entity1.end_angle*Math.PI/180;
+				let sa2 = entity2.start_angle*Math.PI/180;
+				let ea2 = entity2.end_angle*Math.PI/180;
+				let points = [], AddPt1 = false, AddPt2 = false;
+				
+				let ang1 = Math.abs(Math.atan((ysol1 - y1)/(sol1 - x1)));					
+				if (ysol1 > y1 && sol1 < x1) {
+					ang1 = Math.PI - ang1;
+				} else if (ysol1 < y1 && sol1 < x1) {
+					ang1 = Math.PI + ang1;
+				} else if (ysol1 < y1 && sol1 > x1) {
+					ang1 = 2*Math.PI - ang1;
+				} 
+				if (((sa1 < ea1 && ((ang1 - sa1)*(ang1 - ea1) < tolerance)) || (sa1 > ea1 && ((ang1 - sa1)*(ang1 - ea1) > tolerance)))) {
+					AddPt1 = true;
+				}
+						
+				let ang2 = Math.abs(Math.atan((ysol2 - y1)/(sol2 - x1)));					
+				if (ysol2 > y1 && sol2 < x1) {
+					ang2 = Math.PI - ang2;
+				} else if (ysol2 < y1 && sol2 < x1) {
+					ang2 = Math.PI + ang2;
+				} else if (ysol2 < y1 && sol2 > x1) {
+					ang2 = 2*Math.PI - ang2;
+				} 
+				if (((sa1 < ea1 && ((ang2 - sa1)*(ang2 - ea1) < tolerance)) || (sa1 > ea1 && ((ang2 - sa1)*(ang2 - ea1) > tolerance)))) {
+					AddPt2 = true;
+				}
+				
+				if (AddPt1) {
+					let ang1 = Math.abs(Math.atan((ysol1 - y2)/(sol1 - x2)));					
+					if (ysol1 > y2 && sol1 < x2) {
+						ang1 = Math.PI - ang1;
+					} else if (ysol1 < y2 && sol1 < x2) {
+						ang1 = Math.PI + ang1;
+					} else if (ysol1 < y2 && sol1 > x2) {
+						ang1 = 2*Math.PI - ang1;
+					} 
+					if (((sa2 < ea2 && ((ang1 - sa2)*(ang1 - ea2) < tolerance)) || (sa2 > ea2 && ((ang1 - sa2)*(ang1 - ea2) > tolerance)))) {
+						let json1 = {};
+						json1[`${ax1}`] = sol1;
+						json1[`${ax2}`] = ysol1;						
+						points.push(json1);
+					}
+				}
+				if (AddPt2) {
+					let ang2 = Math.abs(Math.atan((ysol2 - y2)/(sol2 - x2)));					
+					if (ysol2 > y2 && sol2 < x2) {
+						ang2 = Math.PI - ang2;
+					} else if (ysol2 < y2 && sol2 < x2) {
+						ang2 = Math.PI + ang2;
+					} else if (ysol2 < y2 && sol2 > x2) {
+						ang2 = 2*Math.PI - ang2;
+					} 
+					if (((sa2 < ea2 && ((ang2 - sa2)*(ang2 - ea2) < tolerance)) || (sa2 > ea2 && ((ang2 - sa2)*(ang2 - ea2) > tolerance)))) {
+						let json2 = {};
+						json2[`${ax1}`] = sol2;
+						json2[`${ax2}`] = ysol2;
+						points.push(json2);
+					}
+				}
+				return points;
+			}
+		}	
+		
+		
 		return points;
 	}
 	return [];

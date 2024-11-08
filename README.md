@@ -59,9 +59,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- Five new functions ```connected```, ```crossing```, ```tangent```, ```istangent``` and ```nurbs``` are added.
-- ```weights```, ```start_tangent``` and ```end_tangent``` properties are added to ```AcDbSpline```.
-- The ```length``` and ```area``` functions have new functionalities to calculate spline lengths and areas respectively.
+- A bug in ```intersection``` function is fixed - functionality for intersection of ```circle/arc``` vs. ```circle/arc``` which was previously missed out is added.
 
 # Constructor
 

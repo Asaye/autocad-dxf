@@ -2204,7 +2204,7 @@ const Entities = class {
 			return Math.abs(xc1 - xc2) < this.tolerance && Math.abs(yc1 - yc2) < this.tolerance && Math.abs(r1 - r2) > this.tolerance;
 		}
 		return false;
-	}	
+	}		
 	
 	distance = (entity, entity2, plane) => {
 		return Distance(entity, entity2, plane, this.getAxes, this.tolerance);

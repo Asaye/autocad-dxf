@@ -160,6 +160,7 @@ const BSplineJSON = (spline) => {
 			}
 		};
 		let lsum = 0, asum = 0;
+		
 		for (let j = 0; j < QUADRATURE_VALUES.length; j++) {
 			const res = fn(QUADRATURE_VALUES[j],i);
 			lsum = lsum + QUADRATURE_WEIGHTS[j]*res[0];
