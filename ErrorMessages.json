@@ -1,0 +1,6 @@
+{
+	"FILTER_CRITERIA": "The data type for criteria parameter is not correct. It should be a json object.",
+	"FILTER_ENTITIES": "The data type for entities parameter is not correct. It should be an array of objects.",
+	"FILTER": "There are no entities to filter from. Pass the domain entities as the second parameter of filter fuction or instantiate the Entities constructor with appropriate first parameter.",
+	"INCORRECT_PARAMS": "Undefined/Incorrect parameters."
+}

@@ -1,0 +1,26 @@
+{
+  "name": "autocad-dxf",
+  "version": "1.4.0",
+  "description": "A module which can be used to parse AutoCAD dxf files and to make programmatic and geometric operations on the AutoCAD drawing entities.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Asaye/autocad-dxf.git"
+  },
+  "keywords": [
+    "AutoCAD",
+    "DXF",
+    "Parser",
+    "Drawings",
+    "Layers"
+  ],
+  "author": "Asaye Dilbo <asayechemeda@yahoo.com>",
+  "bugs": {
+    "url": "https://github.com/Asaye/autocad-dxf/issues"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Asaye/autocad-dxf#readme"
+}
