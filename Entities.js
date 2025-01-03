@@ -2158,8 +2158,16 @@ const Entities = class {
 			throw new Error(ErrorMessages.INCORRECT_PARAMS);
 			return;
 		}
-		return entities.filter((item) => 
-			(!criteria.etype || !Array.isArray(criteria.etype) || criteria.etype.filter((en) => (("acdb" + en.toLowerCase()) == item.subclass.toLowerCase()) || (item.specific_type && ("acdb" + en.toLowerCase()) == item.specific_type.toLowerCase())).length > 0) &&
+		
+		let etype = [];
+		if (Array.isArray(criteria.etype)) {
+			criteria.etype.forEach((t) => {
+				etype.push(`acdb${t.toLowerCase().trim()}`);
+			});
+		}
+		
+		return entities.filter((item, index) => {	
+			return (etype.length == 0 || etype.indexOf(item.subclass.toLowerCase()) != -1 || (item.specific_type && etype.indexOf(item.specific_type.toLowerCase()) != -1)) &&
 			(!criteria.layer || !Array.isArray(criteria.layer) || criteria.layer.filter((la) => la == item.layer).length > 0) && 
 			(!criteria.between || this.checkBetween(criteria.between, item)) &&
 			(!criteria.radius || criteria.radius == item.radius) &&
@@ -2168,7 +2176,9 @@ const Entities = class {
 			(!criteria.line_type || (item.line_type && criteria.line_type.toLowerCase() == item.line_type.toLowerCase())) &&
 			(!criteria.visibility || (item.visibility && criteria.visibility.toLowerCase() == item.visibility.toLowerCase())) &&
 			(!criteria.arc || Math.abs(criteria.arc.angle*(criteria.arc.unit == "degrees" ? 1 : 180/Math.PI) - Math.abs(item.start_angle - item.end_angle)) < this.tolerance) &&	
-			(!criteria.nsides || this.checkNoOfSides(criteria.nsides, item, ax1, ax2)));
+			(!criteria.nsides || this.checkNoOfSides(criteria.nsides, item, ax1, ax2)) &&
+			(!criteria.where || this.filterWhere(criteria.where, item, plane))
+		});
 	}
 	
 	checkCorner = (data, item, ax1, ax2) => {
@@ -2301,6 +2311,59 @@ const Entities = class {
 				return Checkif.checkConvex(entity1, entity2, plane, this.getAxes, this.tolerance);
 			} 		
 		}		
+	}
+	
+	filterWhere = (criteria, item, plane) => {
+		if (!item || !Array.isArray(criteria) || typeof item != "object") {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		
+		let [ax1, ax2] = this.getAxes(plane);
+		if (plane && ax1 === undefined && ax2 === undefined) {
+			throw new Error(ErrorMessages.INCORRECT_PARAMS);
+			return;
+		}
+		let doesFulfil = true;
+		for (let i = 0; i < criteria.length; i++) {
+			const condition = criteria[i].condition;
+			const reference = criteria[i].reference;
+			if (item == reference) return false;
+			
+			if (condition == "inside") { 
+				doesFulfil = Checkif.checkInside(item, reference, plane, this.getAxes, this.tolerance);
+			} else if (condition == "outside") {
+				doesFulfil = Checkif.checkOutside(item, reference, plane, this.getAxes, this.tolerance);
+			} else if (condition == "on") {
+				doesFulfil = Checkif.checkOnside(item, reference, plane, this.getAxes, this.tolerance);
+			} else if (condition == "parallel") {
+				doesFulfil = Checkif.checkParallel(item, reference, plane, this.getAxes, this.tolerance, this.getCorners);
+			} else if (condition == "orthogonal") {
+				doesFulfil = Checkif.checkOrthogonal(item, reference, plane, this.getAxes, this.tolerance);
+			} else if (condition == "aligned") {
+				doesFulfil = Checkif.checkAligned(item, reference, plane, this.getAxes, this.tolerance);
+			} else if (condition == "delaunay") {
+				doesFulfil = Checkif.checkDelaunay(reference, item, plane, this.getAxes, this.tolerance);
+			} else if (condition == "convex") {
+				doesFulfil = Checkif.checkConvex(reference, item, plane, this.getAxes, this.tolerance);
+			} else if (condition == "horizontal" || condition == "vertical" || condition == "inclined") {
+				if (item.subclass == "AcDbLine") {
+					const x1 = item[`start_${ax1}`];
+					const y1 = item[`start_${ax1}`];
+					const x2 = item[`end_${ax1}`];
+					const y2 = item[`end_${ax1}`];
+					doesFulfil = (condition == "horizontal" && Math.abs(y2 - y1) <= this.tolerance) || 
+						         (condition == "vertical" && Math.abs(x2 - x1) <= this.tolerance) ||
+						         (condition == "inclined" && Math.abs(x2 - x1) > this.tolerance && Math.abs(y2 - y1) > this.tolerance);
+				} else {
+					return false;
+				}
+			}
+			
+			if (!doesFulfil) return false;
+		}
+		
+		return doesFulfil;
 	}
 	
 	distance = (entity, entity2, plane) => {

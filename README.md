@@ -14,7 +14,7 @@ $ npm install autocad-dxf --save
 ### Import
 
 ```import Entities from 'autocad-dxf';```
-## Front-end example
+## ES6 module example
 
 ```
 import Entities from 'autocad-dxf';
@@ -40,7 +40,7 @@ function fileEventListener() {
   }
 }
 ```
-## Back-end example
+## Node (CommonJS) example
 
 ```
 const fs = require('fs');
@@ -59,9 +59,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- A new function ```checkif``` is added.
-- A new function ```circumcircle``` is added.
-- A new entity ```AcDbFcf``` (TOLERANCE) is included.
+- A new property ```where``` is added to ```filter``` function. It is now possible to filter entities in reference to (inside, outside, on, ...) other entities.
 
 # Constructor
 
@@ -126,7 +124,7 @@ The following built-in functions can be called on the object of ```Entities``` c
 
 #### &#x1F537; triangulate(vertices :array [, plane :string]): 
 
-This function is used to triangulate closed or closable (non-straight) polylines (polygons); i.e., to subdivide the polygon into a set of triangles. It takes an array of vertices of a polyline as a first parameter. Each element of the array needs to have a form of (for example in ```x-y``` plane): ```{x:123.456, y:789.012}```. 
+This function is used to triangulate closed or closable (non-straight) and non-crossing polylines (polygons); i.e., to subdivide the polygon into a set of triangles. It takes an array of vertices of a polyline as a first parameter. Each element of the array needs to have a form of (for example in ```x-y``` plane): ```{x:123.456, y:789.012}```. 
 The function returns a two-dimensional array where each internal array contains the coordinates of the three corners of a triangle. 
 
 The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
@@ -238,13 +236,14 @@ The output for this example can be found [here](https://github.com/Asaye/autocad
 This function is used to check if ```entity1``` fulfils a ```criteria``` with respect to ```entity2```. The ```criteria``` parameter can be one of ```inside```, ```outside```, ```on```, ```parallel```, ```orthogonal```, ```aligned```, ```delaunay``` or ```convex```. 
 The applicable combinations of ```criteria```, ```entity1``` and ```entity2``` are given below. In all cobinations, wherever ```entity1``` or ```entity2```  is ```AcDbPoint``` (point), a shorthand array form of ```[x, y]``` (based on the used ```plane``` as described below) can be passed as an entity. 
 
+
 <table>
-    <tr><td><code>criteria</code></td><td><code>etype1</code></td><td><code>etype2</code></td><td style="font-weight: 700">Remark</td></tr>
+    <tr><td><a name="checkif"><code>criteria</code></a></td><td><code>etype1</code></td><td><code>etype2</code></td><td style="font-weight: 700">Remark</td></tr>
     <tr><td rowspan="4">inside/outside</td><td>point</td><td>line</td></tr>
-	<tr><td>point/ text/ mtex/ line/ polyline/ circle/ arc</td><td>circle</td><td rowspan="3"><ul><li><small>An entity is considered to be inside/outside another entity if its whole part (except its end points which can be on the edges of the other entity) is inside/outside the other entity</small></li><li><small>For text and mtext, only the text alignment point is considered. The whole text might not be inside/outside.</small></li></ul></td></tr>
-	<tr><td>point/ text/ mtex/ line/ polyline/ circle/ arc/ ellipse</td><td>polyline</td></tr>  
-	<tr><td>point/ text/ mtex/ line/ polyline</td><td>ellipse</td></tr>  
-	<tr><td>on</td><td>point/text/mtext</td><td>point/ text/ mtext/ line/ circle/ arc/ ellipse/ spline</td><td><ul><li><small>points at the end points of splines are not considered to be inside</small></li></ul></td></tr>
+	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc/ dimension line</td><td>circle</td><td rowspan="3"><ul><li><small>An entity is considered to be inside/outside another entity if its whole part (except its end points which can be on the edges of the other entity) is inside/outside the other entity</small></li><li><small>For text, mtext and dimension line, only the alignment point is considered. The whole text/dimension line might not be inside/outside.</small></li></ul></td></tr>
+	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc/ ellipse/ dimension line</td><td>polyline</td></tr>  
+	<tr><td>point/ text/ mtext/ line/ polyline/ dimension line</td><td>ellipse</td></tr>  
+	<tr><td>on</td><td>point/text/mtext/dimension line</td><td>point/ text/ mtext/ line/ circle/ arc/ ellipse/ spline/dimension line</td><td><ul><li><small>points at the end points of splines are not considered to be inside</small></li></ul></td></tr>
 	<tr><td rowspan="3">aligned</td><td>line</td><td>line</td></tr>
 	<tr><td>circle/arc</td><td>circle/arc</td></tr>
 	<tr><td>ellipse</td><td>ellipse</td></tr>
@@ -784,18 +783,19 @@ Property | Type | Description
 [layer] | array | An array of strings (layer names) to filter from.
 [color] | string/number | A string (```ByBlock``` or ```ByLayer```) or a number from 0 to 256 representing AutoCAD color number.
 [visibility] | string | A string (```visible``` or ```invisible```).
-[line_type] | string | A string representing the line type.
+[line_type] | string | A string representing the line type.(```ByLayer```, ```ByBlock``` or other)
 [text] | object | An object which is used to filter texts. It has ```equals```, ```notequals```, ```starts```, ```notstarts```, ```ends```, ```notends```, ```contains```, ```notcontains```,```regex```,```height```,```style```, ```rotation```, ```operator``` and ```i``` keys. The ```equals```, ```starts```,```ends```, ```contains``` and ```notcontains``` keys take string value where: ```equals``` filters texts equal to the given text. ```starts``` filters texts which start with the given text. ```ends``` filters texts which end with the given text. ```contains``` filters texts which contain the given text. The ```notequals```, ```notstarts```, ```notends``` and ```notcontains``` are the corresponding negations. If these properties are provided at the same time, the ```operator``` property is used to specify which logical operator (<code>&&</code> or <code>\|\|</code>) to use while combining the filters. If the value of ```operator``` property is ```or``` or <code>\|\|</code>, the ```OR``` logical operator is used otherwise the ```AND``` logical operator will be used. The case sensitivity of the filters can be set using the ```i``` property which takes a boolean value. If not given or ``` i: false ``` specifies that the filtering is case sensitive. Alternatively, a regular expression (literal or ```RegExp``` class object) can be passed for filtering using the ```regex``` property. The ```height``` and ```rotation``` properties take numbers representing the height and rotation (in degrees) of the text respectively. The ```style``` property takes a string representing the style of the text.
 [between] | object | The bounding coordinates of the entities to be filtered. It has six optional properies: <code>xmin</code>,<code>xmax</code>, <code>ymin</code>,<code>ymax</code>,<code>zmin</code> and <code>zmax</code>. The default value for <code>xmin</code>, <code>ymin</code> and <code>zmin</code> is <code>-Infinity</code>. The default value for <code>xmax</code>, <code>ymax</code> and <code>zmax</code> is <code>Infinity</code>.
 [radius] | number | A radius value, if the <code>etype</code> propery contains <code>circle</code> or <code>arc</code>.
 [arc] | object | The degree of the arc and the unit of the arc angle if the <code>etype</code> propery contains <code>arc</code>. It contains two properties <code>angle</code> which is a number representing the arc angle and <code>unit</code> which is a string which can be either <code>radians</code> or <code>degrees</code>.
 [nsides] | object | A comparison for the number of sides of the entities to be filtered. It contains two properties <code>value</code> and <code>comparison</code>. The <code>value</code> property contains the numerical value of the number of sides to compare and its default value is 1. Whereas <code>comparison</code> is a string which can be one of <code>eq</code> for equal to, <code>gt</code> for greater than, <code>gte</code> for greater than or equal to (default value), <code>lt</code> for less than, <code>lte</code> for less than, <code>ne</code> for not equal to. This property is applicable for polygons (<code>AcDbPolyline</code>) only.
+[where] | array | A list of criteria in reference to other entities. Each element of the array should be a JSON object with two properties: ```condition``` and ```reference```. The value of the ```condition``` property can be one of: ```inside```, ```outside```, ```on```, ```parallel```, ```orthogonal```, ```aligned```, ```delaunay``` or ```convex```. Whereas, the ```reference``` property should be an entity object. Note that not all entity types are supported. The supported entities are the same as those described in [<code>checkif</code>](#checkif)  function. If there are more than one element in the ```where``` array,```AND``` (logical operator) is used to join the multiple criteria.
 
 The optional <code>entities</code> parameter can be part or the whole of ```entities``` property or a custom made list of entities (json) with keys from this [list](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json).
 The optional <code>plane</code> parameter specifies on which plane that the filterning will be performed and it is applicable when ```nsides``` property is defined. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
 ### Example
-Filter lines and texts on layers 'dims' and 'titles';
+Filter lines and texts on layers 'dims' and 'titles' and which are inside a circle (say the circle is the first element of ```entities``` array.)
 ```
 	const Entities = require("autocad-dxf");
 	const data = "DATA_FROM_DXF_FILE";
@@ -803,7 +803,8 @@ Filter lines and texts on layers 'dims' and 'titles';
 	const res = new Entities(data);
 	const filtered = res.filter({
 		etype: ["line", "text"], 
-		layer: ["dims", "texts"]
+		layer: ["dims", "texts"],
+		where: [{condition: "inside", reference: res.entities[0]}]
 	});
 	
 	console.log(filtered);

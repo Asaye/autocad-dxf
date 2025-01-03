@@ -1,31 +1,5 @@
 const ErrorMessages = require("./ErrorMessages.json");
 
-const vLineIntersection = (x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2, tolerance) => {
-	const m1 = (y12 - y11)/(x12 - x11);
-	const m2 = (y22 - y21)/(x22 - x21);
-	
-	if (Math.abs(m1) == Infinity && Math.abs(m2) != Infinity) {
-		const y = m2*(x11 - x22) + y22;
-		if ((y - y11)*(y - y12) < tolerance && (x11 - x21)*(x11 - x22) < tolerance) {
-			let json = {};
-			json[`${ax1}`] = x11;
-			json[`${ax2}`] = y;
-			return [json];
-		}
-		return [];
-	} else if (Math.abs(m1) != Infinity && Math.abs(m2) == Infinity) {
-		const y = m1*(x22 - x12) + y12;
-		if ((y - y21)*(y - y22) < tolerance && (x22 - x11)*(x22 - x12) < tolerance) {
-			let json = {};
-			json[`${ax1}`] = x22;
-			json[`${ax2}`] = y;			
-			return [json];
-		}
-		return [];
-	} 
-	return [];
-};
-
 const intersection = (entity1, entity2, plane, getAxes, tolerance) => {	
 	if (typeof entity1 != "object" || typeof entity2 != "object" || Array.isArray(entity1) || Array.isArray(entity2)) {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
@@ -49,27 +23,20 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		const y21 = entity2[`start_${ax2}`];
 		const x22 = entity2[`end_${ax1}`];
 		const y22 = entity2[`end_${ax2}`];
+		const det = (x12 - x11)*(y22 - y21) - (x22 - x21)*(y12 - y11);	
+		const det1 = (x22 - x11)*(y22 - y21) - (x22 - x21)*(y22 - y11);
+		const det2 = (x12 - x11)*(y12 - y21) - (x12 - x21)*(y12 - y11);
+		const r1 = det1/det;
+		const r2 = det2/det;
 		
-		const m1 = (y12 - y11)/(x12 - x11);
-		const m2 = (y22 - y21)/(x22 - x21);
-		
-		if (Math.abs(m1) == Infinity || Math.abs(m2) == Infinity) {
-			return vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2, tolerance);
-		}		
-		
-		if (Math.abs(m1 - m2) < tolerance) return [];
-		const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
-		const y = m1*x + (-m1*x11 + y11);
-		const isCrossing = (x - x11)*(x - x12) < tolerance && (x - x21)*(x - x22) < tolerance && 
-					(y - y11)*(y - y12) < tolerance && (y - y21)*(y - y22) < tolerance;
-		
-		if (isCrossing) {
+		if (r1 >= 0 && r1 <= 1 && r2 >= 0 && r2 <= 1) {			
 			let json = {};
-			json[`${ax1}`] = x;
-			json[`${ax2}`] = y;
+			json[`${ax1}`] = x11 + det1*(x12 - x11)/det;
+			json[`${ax2}`] = y11 + det1*(y12 - y11)/det;
 			return [json];
-		} 
-		return [];		
+		}
+		
+		return [];
 	} else if ((etype1 == "AcDbLine" && etype2 == "AcDbPolyline") || (etype2 == "AcDbLine"  && etype1 == "AcDbPolyline")) {
 		if (etype1 == "AcDbPolyline") {
 			const temp = entity1;
@@ -92,44 +59,32 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			const x21 = vertices[i - 1][`${ax1}`];
 			const y21 = vertices[i - 1][`${ax2}`];
 			const x22 = vertices[i][`${ax1}`];
-			const y22 = vertices[i][`${ax2}`];				
-			const m2 = (y22 - y21)/(x22 - x21);		
-			const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
-			const y = m1*x + (-m1*x11 + y11);
+			const y22 = vertices[i][`${ax2}`];	
+			const det = (x12 - x11)*(y22 - y21) - (x22 - x21)*(y12 - y11);	
+			const det1 = (x22 - x11)*(y22 - y21) - (x22 - x21)*(y22 - y11);
+			const det2 = (x12 - x11)*(y12 - y21) - (x12 - x21)*(y12 - y11);
+			const r1 = det1/det;
+			const r2 = det2/det;
 			
-			if (Math.abs(m1) == Infinity || Math.abs(m2) == Infinity) {
-				const intersection = vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2, tolerance);
-				if (intersection.length > 0) {let pointAdded = false;
-					for (let j = 0; j < points.length; j++) {
-						if (Math.abs(points[j][ax1] - x) < tolerance && Math.abs(points[j][ax2] - y) < tolerance) {
-							pointAdded = true;
-							break;
-						}
-					}
-					if (!pointAdded) {						
-						points.push(intersection[0]);
-					}
-				}
-			} else {
-				const temp = (x - x11)*(x - x12) < tolerance && (x - x21)*(x - x22) < tolerance && 
-				   (y - y11)*(y - y12) < tolerance && (y - y21)*(y - y22) < tolerance;
-				if (temp) {
-					let pointAdded = false;
-					for (let j = 0; j < points.length; j++) {
-						if (Math.abs(points[j][ax1] - x) < tolerance && Math.abs(points[j][ax2] - y) < tolerance) {
-							pointAdded = true;
-							break;
-						}
-					}
-					if (!pointAdded) {
-						let json = {};
-						json[`${ax1}`] = x;
-						json[`${ax2}`] = y;
-						points.push(json);
-					}
-				}
+			if (r1 < 0 || r1 > 1 || r2 < 0 || r2 > 1) {
+				continue;
 			}
 			
+			const x = x11 + det1*(x12 - x11)/det;
+			const y = y11 + det1*(y12 - y11)/det;
+			let pointAdded = false;
+			for (let j = 0; j < points.length; j++) {
+				if (Math.abs(points[j][ax1] - x) < tolerance && Math.abs(points[j][ax2] - y) < tolerance) {
+					pointAdded = true;
+					break;
+				}
+			}
+			if (!pointAdded) {
+				let json = {};
+				json[`${ax1}`] = x;
+				json[`${ax2}`] = y;
+				points.push(json);
+			}
 		}
 		
 		return points;			
@@ -146,44 +101,41 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		
 		let points = [];
 		for (let i = 1; i < vertices1.length; i++) {
-			const x21 = vertices1[i - 1][`${ax1}`];
-			const y21 = vertices1[i - 1][`${ax2}`];
-			const x22 = vertices1[i][`${ax1}`];
-			const y22 = vertices1[i][`${ax2}`];				
-			const m2 = (y22 - y21)/(x22 - x21);	
+			const x11 = vertices1[i - 1][`${ax1}`];
+			const y11 = vertices1[i - 1][`${ax2}`];
+			const x12 = vertices1[i][`${ax1}`];
+			const y12 = vertices1[i][`${ax2}`];				
+			
 			for (let j = 1; j < vertices2.length; j++) {
-				const x11 = vertices2[j - 1][`${ax1}`];
-				const y11 = vertices2[j - 1][`${ax2}`];
-				const x12 = vertices2[j][`${ax1}`];
-				const y12 = vertices2[j][`${ax2}`];				
-				const m1 = (y12 - y11)/(x12 - x11);	
-				const x = ((-m2*x21 + y21) - (-m1*x11 + y11))/(m1 - m2);
-				const y = m1*x + (-m1*x11 + y11);
+				const x21 = vertices2[j - 1][`${ax1}`];
+				const y21 = vertices2[j - 1][`${ax2}`];
+				const x22 = vertices2[j][`${ax1}`];
+				const y22 = vertices2[j][`${ax2}`];				
+				const det = (x12 - x11)*(y22 - y21) - (x22 - x21)*(y12 - y11);			
 				
-				if (Math.abs(m1) == Infinity || Math.abs(m2) == Infinity) {
-					const intersection = vLineIntersection(x11, y11, x12, y12, x21, y21, x22, y22, ax1, ax2, tolerance);
-					if (intersection.length > 0) {						
-						points.push(intersection[0]);
+				const det1 = (x22 - x11)*(y22 - y21) - (x22 - x21)*(y22 - y11);
+				const det2 = (x12 - x11)*(y12 - y21) - (x12 - x21)*(y12 - y11);
+				const r1 = det1/det;
+				const r2 = det2/det;
+		
+				if (r1 < 0 || r1 > 1 || r2 < 0 || r2 > 1) {
+					continue;
+				}
+				
+				const x = x11 + det1*(x12 - x11)/det;
+				const y = y11 + det1*(y12 - y11)/det;
+				let pointAdded = false;
+				for (let j = 0; j < points.length; j++) {
+					if (Math.abs(points[j][ax1] - x) < tolerance && Math.abs(points[j][ax2] - y) < tolerance) {
+						pointAdded = true;
+						break;
 					}
-				} else {
-					const temp = (x - x11)*(x - x12) < tolerance && (x - x21)*(x - x22) < tolerance && 
-					   (y - y11)*(y - y12) < tolerance && (y - y21)*(y - y22) < tolerance;
-					   
-					if (temp) {
-						let added = false;
-						for (let k = 0; k < points.length; k++) {
-							if (Math.abs(points[k][ax1] - x) < tolerance && Math.abs(points[k][ax2] - y) < tolerance) {
-								added = true;
-								break;
-							}
-						}
-						if (!added) {
-							let json = {};
-							json[`${ax1}`] = x;
-							json[`${ax2}`] = y;
-							points.push(json);
-						}
-					}
+				}
+				if (!pointAdded) {
+					let json = {};
+					json[`${ax1}`] = x;
+					json[`${ax2}`] = y;
+					points.push(json);
 				}
 			}
 		}

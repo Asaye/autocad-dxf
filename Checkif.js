@@ -49,7 +49,7 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 		} else if (typeof data == "object") {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;				
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];					
 				return checkInside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbLine") {
@@ -68,9 +68,10 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 				if (radius2 > (radius + tolerance)) {
 					return false;
 				} else {
-					item.radius = item.radius - data.radius;
+					let temp = JSON.parse(JSON.stringify(item));
+					temp.radius = temp.radius - data.radius;
 					data = [data[ax1], data[ax2]];					
-					return checkInside(data, item, plane, getAxes, tolerance);
+					return checkInside(data, temp, plane, getAxes, tolerance);
 				}
 			} else if (etype2 == "AcDbCircle" && data.etype == "ARC") {
 				const radius2 = data.radius;
@@ -108,7 +109,7 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 			return CheckPointInside(vertices, x, y, ax1, ax2);
 		} else if (typeof data == "object") {
 			const etype2 = data.subclass;
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {				
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
 				return CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
 			} else if (etype2 == "AcDbLine") {
 				let x0 = data[`start_${ax1}`], y0 = data[`start_${ax2}`];
@@ -192,7 +193,7 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 				}
 			} else if (etype2 == "AcDbEllipse") {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
-				console.log(intersection);
+				
 				let x = data[ax1], y = data[ax2];				
 				if (!intersection || intersection.length == 0) {
 					if (!isNaN(data[`start_${ax1}`]) && !isNaN(data[`start_${ax2}`])) {
@@ -287,7 +288,7 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;
 			
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];
 				return checkInside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbLine") {
@@ -373,7 +374,7 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 		} else if (typeof data == "object") {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;				
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];					
 				return checkOutside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbLine") {
@@ -421,9 +422,10 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 				if (radius2 > (radius + tolerance)) {
 					return true;
 				} else {
-					item.radius = item.radius - data.radius;
+					let temp = JSON.parse(JSON.stringify(item));
+					temp.radius = temp.radius - data.radius;
 					data = [data[ax1], data[ax2]];					
-					return checkOutside(data, item, plane, getAxes, tolerance);
+					return checkOutside(data, temp, plane, getAxes, tolerance);
 				}
 			} else if (etype2 == "AcDbCircle" && data.etype == "ARC") {
 				const radius2 = data.radius;
@@ -463,20 +465,19 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 			return !CheckPointInside(vertices, x, y, ax1, ax2);
 		} else if (typeof data == "object") {
 			const etype2 = data.subclass;
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {				
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
 				return !CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
 			} else if (etype2 == "AcDbLine") {
 				let x0 = data[`start_${ax1}`], y0 = data[`start_${ax2}`];
 				let x1 = data[`end_${ax1}`], y1 = data[`end_${ax2}`];
 				
-				const ipt = Intersection(data, item, plane, getAxes, tolerance);
-				console.log(ipt);
+				const ipt = Intersection(data, item, plane, getAxes, tolerance);				
 				const startPointInside = CheckPointInside(vertices, x0, y0, ax1, ax2);				
 				if (!ipt || ipt.length == 0) {
 					return !startPointInside;
 				} else {					
 					ipt.sort((a, b) => x1 > x0 && a[ax1] > b[ax1] ? 1 : (x1 == x0 && y1 > y0 ? (a[ax2] > b[ax2] ? 1: -1): -1));
-					console.log(ipt);
+					
 					const d1 = (ipt[0][ax1] - x0)*(ipt[0][ax1] - x0) + (ipt[0][ax2] - y0)*(ipt[0][ax2] - y0); 
 					const d2 = (ipt[0][ax1] - x1)*(ipt[0][ax1] - x1) + (ipt[0][ax2] - y1)*(ipt[0][ax2] - y1); 
 					
@@ -690,7 +691,7 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;
 			
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText") {
+			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];
 				return !checkInside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbLine") {
@@ -775,7 +776,7 @@ const checkOnside = (data, item, plane, getAxes, tolerance) => {
 	const x = Array.isArray(data) ? data[0] : data[ax1];
 	const y = Array.isArray(data) ? data[1] : data[ax2];
 	
-	if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbMText") {		
+	if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbDimension") {		
 		return Math.abs(x - item[ax1]) < tolerance && Math.abs(y - item[ax2]) < tolerance;
 	} else if (etype == "AcDbLine") {
 		const x0 = item[`start_${ax1}`];
@@ -1213,6 +1214,7 @@ const checkConvex = (line1, line2, plane, getAxes, tolerance) => {
 	if (line1.subclass == "AcDbLine" && line2.subclass == "AcDbLine") {
 		const intersection = Intersection(line1, line2, plane, getAxes, tolerance);
 		if (!intersection || intersection.length == 0) return false;
+		
 		const x = intersection[0][`${ax1}`];
 		const y = intersection[0][`${ax2}`];
 		p2 = [x, y];
@@ -1232,9 +1234,7 @@ const checkConvex = (line1, line2, plane, getAxes, tolerance) => {
 			return false;
 		}
 	} else {
-		p1 = line1[0];
-		p2 = line1[1];
-		p3 = line2[1];
+		return false;
 	}
 	
 	const x1 = p1[0], y1 = p1[1];
@@ -1250,6 +1250,13 @@ const checkDelaunay = (triangle, point, plane, getAxes, tolerance) => {
 	if (plane && ax1 === undefined && ax2 === undefined) {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
 		return;
+	}
+	if ((!Array.isArray(triangle) && !triangle.vertices) || (Array.isArray(triangle) && triangle.length < 3) || 
+		(triangle.vertices && triangle.vertices.length < 3)) {
+		return false;
+	}
+	if (point.subclass && point.subclass != "AcDbPoint") {
+		return false;
 	}
 	const x = point[ax1] || point[0];
 	const y = point[ax2] || point[1];
