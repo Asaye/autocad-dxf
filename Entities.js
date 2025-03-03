@@ -27,6 +27,35 @@ const Entities = class {
 		}
 	}	
 	
+	getDimStyleParams = (code, value, key) => {
+		let actualValue;
+		if (code == "148" || code == "171" || code == "179") {
+			actualValue = value;
+		} else if (code == "371" || code == "372") {			
+			if (value == "-3") {
+				actualValue = "Standard";
+			} else if (value == "-2") {
+				actualValue = "ByLayer";
+			} else if (value == "-1") {
+				actualValue = "ByBlock";
+			} else {
+				actualValue = `${(parseFloat(value)/100)}mm`;
+			}
+		} else if (code == "280" || code == "77" || code == "275" || code == "270" || code == "277" || code == "279" || code == "283" || code == "289") {
+			actualValue = DIMSTYLE_CODES[key][value];
+		} else if (code == "75" || code == "76" || code == "281" || code == "282") {
+			actualValue = value == "1" ? "Suppressed" : "Not suppressed";
+		} else {
+			let temp = parseFloat(value);
+			if (isNaN(temp)) temp = value;
+			if (DIMSTYLE_CODES.booleans.indexOf(code) != -1) {
+				temp = (temp == 1) ? "On" : "Off";
+			}
+			actualValue = temp;
+		}
+		return actualValue;
+	}
+	
 	getTables = (array, COUNT) => {			
 		let ttype, json;
 		while (COUNT < array.length - 1) {
@@ -68,49 +97,8 @@ const Entities = class {
 					json = null;
 				} else if (json && code == "2") {
 					json.name = value;
-				} else if (json && DIMSTYLE_CODES[code]) {
-					if (code == "371" || code == "372") {
-						let temp;
-						if (value == "-3") {
-							temp = "Standard";
-						} else if (value == "-2") {
-							temp = "ByLayer";
-						} else if (value == "-1") {
-							temp = "ByBlock";
-						} else {
-							temp = `${(parseFloat(value)/100)}mm`;
-						}
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "280") {
-						let temp;
-						if (value == "0") {
-							temp = "Centered";
-						} else if (value == "1") {
-							temp = "First extension line";
-						} else if (value == "2") {
-							temp = "Second extension line";
-						} else if (value == "3") {
-							temp = "Over first extension";
-						} else if (value == "4") {
-							temp = "Over second extension";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "77") {
-						let temp;
-						if (value == "0") {
-							temp = "Centered";
-						} else if (value == "1") {
-							temp = "Above dimension line";
-						} else if (value == "2") {
-							temp = "Outside";
-						} else if (value == "3") {
-							temp = "Japanese Industry Standards (JIS)";
-						} else if (value == "4") {
-							temp = "Below dimension line";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "78" || code == "286") {
-						let temp;
+				} else if (json && DIMSTYLE_CODES[code]) {					
+					if (code == "78" || code == "286") {
 						if (value == "0") {
 							json.suppress_zero_inches = "No";
 							json.suppress_zero_feet = "Yes";
@@ -125,7 +113,6 @@ const Entities = class {
 							json.suppress_zero_feet = "Yes";
 						} 
 					}  else if (code == "284") {
-						let temp;
 						if (value == "0") {
 							json.alt_suppress_leading_zeros = "No";
 							json.alt_suppress_trailing_zeros = "No";
@@ -140,7 +127,6 @@ const Entities = class {
 							json.alt_suppress_trailing_zeros = "Yes";
 						} 
 					} else if (code == "79" || code == "285") {
-						let temp;
 						if (value == "0") {
 							json.suppress_leading_zeros = "No";
 							json.suppress_trailing_zeros = "No";
@@ -154,95 +140,10 @@ const Entities = class {
 							json.suppress_leading_zeros = "Yes";
 							json.suppress_trailing_zeros = "Yes";
 						} 
-					} else if (code == "148" || code == "171" || code == "179") {
-						json[DIMSTYLE_CODES[code]] = value;
-					} else if (code == "275") {
-						let temp;
-						if (value == "0") {
-							temp = "Decimal degrees";
-						} else if (value == "1") {
-							temp = "Degrees/minutes/seconds";
-						} else if (value == "2") {
-							temp = "Gradians";
-						} else if (value == "3") {
-							temp = "Radians";
-						} else if (value == "4") {
-							temp = "Surveyor's units";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "270") {
-						let temp;
-						if (value == "1") {
-							temp = "Scientific";
-						} else if (value == "2") {
-							temp = "Decimal;";
-						} else if (value == "3") {
-							temp = "Engineering";
-						} else if (value == "4") {
-							temp = "Architectural (stacked)";
-						} else if (value == "5") {
-							temp = "Fractional (stacked)";
-						} else if (value == "6") {
-							temp = "Architectural";
-						} else if (value == "7") {
-							temp = "Fractional";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "277") {
-						let temp;
-						if (value == "1") {
-							temp = "Scientific";
-						} else if (value == "2") {
-							temp = "Decimal";
-						} else if (value == "3") {
-							temp = "Engineering";
-						} else if (value == "4") {
-							temp = "Architectural";
-						} else if (value == "5") {
-							temp = "Fractional";
-						} else if (value == "6") {
-							temp = "Windows desktop";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "279") {
-						let temp;
-						if (value == "0") {
-							temp = "Keep dim line with text";
-						} else if (value == "1") {
-							temp = "Move text, add leader";
-						} else if (value == "2") {
-							temp = "Move text, no leader";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "283") {
-						let temp;
-						if (value == "0") {
-							temp = "Top";
-						} else if (value == "1") {
-							temp = "Middle";
-						} else if (value == "2") {
-							temp = "Bottom";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
-					} else if (code == "289") {
-						let temp;
-						if (value == "0") {
-							temp = "Text and Arrows";
-						} else if (value == "1") {
-							temp = "Arrows only";
-						} else if (value == "2") {
-							temp = "Text only";
-						} else if (value == "3") {
-							temp = "Best fit";
-						} 
-						json[DIMSTYLE_CODES[code]] = temp;
 					} else {
-						let temp = parseFloat(value);
-						if (isNaN(temp)) temp = value;
-						if (DIMSTYLE_CODES.booleans.indexOf(code) != -1) {
-							temp = (temp == 1) ? "On" : "Off";
-						}
-						json[DIMSTYLE_CODES[code]] = temp;
+						const key = DIMSTYLE_CODES[code]
+						const actualValue = this.getDimStyleParams(code, value, key);
+						json[key] = actualValue;
 					}
 				}					
 			} else if (ttype == "LAYER") {
@@ -619,25 +520,35 @@ const Entities = class {
 		while (COUNT < array.length - 1) {
 			const code = array[COUNT].trim();
 			const value = array[COUNT + 1].trim();	
-			if (code == "0" && value == "ENDSEC" && json.etype != "SEQEND") {	
-				/* if (json.subclass == "AcDbPolyline") {
-					const A = this.area(json);
-					const L = this.length(json);
-					if (!isNaN(A.area)) json.area = A.area;
-					if (!isNaN(L)) json.perimeter = L;
-				} */
+			if (code == "0" && value == "ENDSEC" && json.etype != "SEQEND") {
+				if (json.subclass == "AcDbDimension" && (json.specific_type == 'AcDbRotatedDimension' || json.specific_type == 'AcDbAlignedDimension')) {
+					this.getDimLineCoordinates(json);
+				}
 				this.entities.push(json);
 				return COUNT + 2;
+			}
+			
+			if (value == "DSTYLE") {
+				let ds_code = code, ds_value = value;
+				while (ds_value != "}" && ds_code != "0") {
+					COUNT = COUNT + 2;
+					ds_code = array[COUNT].trim();
+					ds_value = array[COUNT + 1].trim();					
+					if (DIMSTYLE_CODES[ds_value] !== undefined) {	
+						const temp = array[COUNT + 3].trim();
+						const key = DIMSTYLE_CODES[ds_value];
+						const actualValue = this.getDimStyleParams(ds_value, temp, key);						
+						json[key] = actualValue;
+						COUNT = COUNT + 2;
+					}
+				}
 			}
 					
 			if (code == "0" && (!json || (json.subclass && json.subclass != "AcDb3dPolyline" && json.etype != "SEQEND"))) {					
 				if (json) {
-					/* if (json.subclass == "AcDbPolyline" && json.area === undefined) {						
-						const A = this.area(json);
-						const L = this.length(json);
-						if (!isNaN(A.area)) json.area = A.area;
-						if (!isNaN(L)) json.perimeter = L;
-					} */
+					if (json.subclass == "AcDbDimension" && (json.specific_type == 'AcDbRotatedDimension' || json.specific_type == 'AcDbAlignedDimension')) {
+						this.getDimLineCoordinates(json);
+					}
 					this.entities.push(json);
 				}
 				json = {};
@@ -650,8 +561,7 @@ const Entities = class {
 				json2 = undefined;
 				while (array[COUNT + 2].trim() != "0") {
 					COUNT = COUNT + 2;
-				}				
-				//this.insertEntity(code, value, json);
+				}								
 			} else if (code == "0" && json && json.subclass == "AcDb3dPolyline") {
 				if (!json.vertices) json.vertices = [];
 				if (json2) json.vertices.push(json2);		
@@ -807,7 +717,7 @@ const Entities = class {
 				json.start_tangent.x = parseFloat(value);
 			} 				
 		} else if (code == "13") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line1_x = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.location_x = parseFloat(value);  
@@ -829,7 +739,7 @@ const Entities = class {
 				json.end_tangent.x = parseFloat(value);
 			} 
 		} else if (code == "14") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line2_x = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.leader_end_x = parseFloat(value);  
@@ -840,7 +750,7 @@ const Entities = class {
 		} else if (code == "15") {
 			if (json.specific_type == "AcDb3PointAngularDimension") {
 				json.vertex_x = parseFloat(value);  
-			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension") {
+			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.dim_first_point_x = parseFloat(value);  
 			} 
 		} else if (code == "16") {
@@ -927,7 +837,7 @@ const Entities = class {
 				json.start_tangent.y = parseFloat(value);
 			}  
 		} else if (code == "23") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line1_y = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.location_y = parseFloat(value);  
@@ -950,7 +860,7 @@ const Entities = class {
 				json.end_tangent.y = parseFloat(value);
 			} 
 		} else if (code == "24") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line2_y = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.leader_end_y = parseFloat(value);  
@@ -960,7 +870,7 @@ const Entities = class {
 		} else if (code == "25") {
 			if (json.specific_type == "AcDb3PointAngularDimension") {
 				json.vertex_y = parseFloat(value);  
-			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension") {
+			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.dim_first_point_y = parseFloat(value);  
 			} 
 		} else if (code == "26") {
@@ -1048,7 +958,7 @@ const Entities = class {
 				json.start_tangent.z = parseFloat(value);
 			} 
 		} else if (code == "33") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line1_z = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.location_z = parseFloat(value);  
@@ -1069,7 +979,7 @@ const Entities = class {
 				json.end_tangent.z = parseFloat(value);
 			} 
 		} else if (code == "34") {
-			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension") {
+			if (json.specific_type == "AcDbAlignedDimension" || json.specific_type == "AcDb3PointAngularDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.ext_line2_z = parseFloat(value);  
 			} else if (json.specific_type == "AcDbOrdinateDimension") {
 				json.leader_end_z = parseFloat(value);  
@@ -1079,7 +989,7 @@ const Entities = class {
 		} else if (code == "35") {
 			if (json.specific_type == "AcDb3PointAngularDimension") {
 				json.vertex_z = parseFloat(value);  
-			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension") {
+			} else if (json.specific_type == "AcDbRadialDimension" || json.specific_type == "AcDbDiametricDimension" || json.specific_type == "AcDb2LineAngularDimension") {
 				json.dim_first_point_z = parseFloat(value);  
 			} 
 		} else if (code == "36") {
@@ -1386,21 +1296,21 @@ const Entities = class {
 					json.type = "Linear";  
 				} 
 			} else if (json.subclass == "AcDbDimension") {
-				if (value == "0") {
-					json.type = "Rotated, horizontal, or vertical";  
-				} else if (value == "1") {
-					json.type = "Aligned";  
-				} else if (value == "2") {
-					json.type = "Angular";  
-				} else if (value == "3") {
-					json.type = "Diameter";  
-				} else if (value == "4") {
-					json.type = "Radius";  
-				} else if (value == "5") {
-					json.type = "Angular 3 point";  
-				} else if (value == "6") {
-					json.type = "Ordinate";  
-				} else if (value == "64") {
+				let temp = parseInt(value);
+				let ordinateTypeX = false;
+				if (temp >= 128) {
+					json.user_defined_dim_text_position = true;
+					temp = temp - 128;
+				}
+				if (temp >= 64) {
+					ordinateTypeX = true;
+					temp = temp - 64;
+				}
+				if (temp >= 32) {
+					temp = temp - 32;
+				}
+				json.type = DIMSTYLE_CODES.type[temp];
+				if (ordinateTypeX) {
 					json.ordinate = "X-Type";  
 				}
 			} else if (json.subclass == "AcDbVertex") {
@@ -1883,6 +1793,55 @@ const Entities = class {
 		}
 	}	
 	
+	getDimLineCoordinates = (json) => {
+		const type = json.type;
+		if (type == DIMSTYLE_CODES.type[0] || type == DIMSTYLE_CODES.type[1]) {
+			const x0 = json.x;
+			const y0 = json.y;
+			const z0 = json.z;
+			const x1 = json.ext_line1_x;
+			const y1 = json.ext_line1_y;
+			const z1 = json.ext_line1_z;
+			const x2 = json.ext_line2_x;
+			const y2 = json.ext_line2_y;
+			const z2 = json.ext_line2_z;
+			const length = json.actual_measurement;
+		
+			let ax1, ax2;
+			if (Math.abs(x1 - x0) > 0 || Math.abs(x2 - x0) > 0 || Math.abs(x2 - x0) > 0 || Math.abs(x0) > 0 || Math.abs(x1) > 0 || Math.abs(x2) > 0) {
+				ax1 = "x";
+			}
+			if (Math.abs(y1 - y0) > 0 || Math.abs(y2 - y0) > 0 || Math.abs(y2 - y0) > 0 || Math.abs(y0) > 0 || Math.abs(y1) > 0 || Math.abs(y2) > 0) {
+				if (!ax1) {
+					ax1 = "y";
+				} else {
+					ax2 = "y";
+				}
+			}
+			if (Math.abs(z1 - z0) > 0 || Math.abs(z2 - z0) > 0 || Math.abs(z2 - z0) > 0 || Math.abs(z0) > 0 || Math.abs(z1) > 0 || Math.abs(z2) > 0) {
+				ax2 = "z";
+				if (ax1 == "x") {
+					ax1 = "z";
+					ax2 = "x";
+				}
+			}
+			const ax3 = ["x", "y", "z"].filter((item) => item != ax1 && item != ax2)[0];
+			let sign1 = 1, sign2 = 1, rotation = (json.rotation || 0)*Math.PI/180;
+			if (json.type == DIMSTYLE_CODES.type[1]) {
+				rotation = Math.atan2((json[`ext_line1_${ax2}`] - json[`ext_line2_${ax2}`]), (json[`ext_line1_${ax1}`] - json[`ext_line2_${ax1}`]));
+			} else {
+				const temp1 = (json[`ext_line1_${ax1}`] - json[`ext_line2_${ax1}`]);
+				const temp2 = (json[`ext_line1_${ax2}`] - json[`ext_line2_${ax2}`]);
+				sign1 = temp1 == 0 ? 0 : temp1/Math.abs(temp1);
+				sign2 = temp2 == 0 ? 0 : temp2/Math.abs(temp2);
+			}
+			
+			json[`${ax1}_end`] = json[ax1] + sign1*length*Math.cos(rotation);
+			json[`${ax2}_end`] = json[ax2] + sign2*length*Math.sin(rotation);
+			json[`${ax3}_end`] = json[ax3];
+		}
+	}
+	
 	getEllipseAngles = (entity) => {
 		let dx = entity.major_end_dx;
 		let dy = entity.major_end_dy;
@@ -1997,7 +1956,7 @@ const Entities = class {
 	getAxes = (plane) => {
 		if (plane) {
 			plane = plane.trim();
-			if (plane != "x-y" && plane != "y-z" && plane != "z-x" && plane != "y-x" && plane != "z-y" && plane != "x-z") { // 3d plane to be added later
+			if (plane != "x-y" && plane != "y-z" && plane != "z-x" && plane != "y-x" && plane != "z-y" && plane != "x-z" && plane != "0-1" && plane != "1-0") { // 3d plane to be added later
 				return [];
 			}
 		}

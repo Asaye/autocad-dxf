@@ -13,33 +13,46 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 		domain = list2;
 	}
 	let filtered;
+	const entity_text = JSON.stringify(entity);
 	if (Array.isArray(etype)) {
 		filtered = [];
 		domain.forEach((item, index) => {				
 			const txt = item.subclass.replace("AcDb", "").toLowerCase();
 			const txt2 = item.etype ? item.etype.toLowerCase() : "";
+			if (JSON.stringify(item) == entity_text) return;
 			if (etype.indexOf(txt) != -1 || (txt2.length > 0 && etype.indexOf(txt2) != -1)) {
 				filtered.push(item);
 			}
 		});
 	} else {
-		filtered = domain;
+		filtered = domain.filter((item) => JSON.stringify(item) != entity_text);
 	}
 	
-	if (etype2 == "AcDbLine") {
-		const x1 = entity.start_x;
-		const y1 = entity.start_y;
-		const z1 = entity.start_z;
-		const x2 = entity.end_x;
-		const y2 = entity.end_y;
-		const z2 = entity.end_z;			
+	if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity.specific_type == 'AcDbRotatedDimension' || entity.specific_type == 'AcDbAlignedDimension'))) {
+		let x1, y1, z1, x2, y2, z2;
+		if (etype2 == "AcDbLine") {
+			x1 = entity.start_x;
+			y1 = entity.start_y;
+			z1 = entity.start_z;
+			x2 = entity.end_x;
+			y2 = entity.end_y;
+			z2 = entity.end_z;	
+		} else {
+			x1 = entity.x;
+			y1 = entity.y;
+			z1 = entity.z;
+			x2 = entity.x_end;
+			y2 = entity.y_end;
+			z2 = entity.z_end;	
+		}
+				
 		
 		let dmin = Infinity, index = -1;
 		filtered.forEach((item, i) => {
 			let d = Infinity;
 			let etype3 = item.subclass;
 			if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
-				etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) {
+				etype3 == "AcDbText" || etype3 == "AcDbMText")) {
 				const x = item.x;
 				const y = item.y;
 				const z = item.z;
@@ -106,13 +119,24 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 				} else {
 					d = (x - (x1 + x2)/2)*(x - (x1 + x2)/2) + (y - (y1 + y2)/2)*(y - (y1 + y2)/2) + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
 				}
-			} else if (etype3 && etype3 == "AcDbLine") {
-				const x21 = item.start_x;
-				const y21 = item.start_y;
-				const z21 = item.start_z;
-				const x22 = item.end_x;
-				const y22 = item.end_y;
-				const z22 = item.end_z;
+			} else if (etype3 && (etype3 == "AcDbLine" ||
+					(etype3 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')))) {
+				let x21, y21, z21, x22, y22, z22;
+				if (etype3 == "AcDbLine") {
+					x21 = item.start_x;
+					y21 = item.start_y;
+					z21 = item.start_z;
+					x22 = item.end_x;
+					y22 = item.end_y;
+					z22 = item.end_z;	
+				} else {
+					x21 = item.x;
+					y21 = item.y;
+					z21 = item.z;
+					x22 = item.x_end;
+					y22 = item.y_end;
+					z22 = item.z_end;	
+				}				
 				
 				if (x1 == x21 && y1 == y21 && z1 == z21 && x2 == x22 && y2 == y22 && z2 == z22) {
 					return;
@@ -321,7 +345,7 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 		} else {
 			return {};
 		}
-	} else if (etype2 == "AcDbPoint" || etype2 == "AcDbCircle" || etype2 == "AcDbEllipse" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+	} else if (etype2 == "AcDbPoint" || etype2 == "AcDbCircle" || etype2 == "AcDbEllipse" || etype2 == "AcDbText" || etype2 == "AcDbMText") {
 		const x = entity.x;
 		const y = entity.y;
 		const z = entity.z;		
@@ -330,13 +354,25 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 		filtered.forEach((item, i) => {
 			let d = Infinity;
 			let etype3 = item.subclass;
-			if (etype3 == "AcDbLine") {
-				const x1 = item.start_x;
-				const y1 = item.start_y;
-				const z1 = item.start_z;
-				const x2 = item.end_x;
-				const y2 = item.end_y;
-				const z2 = item.end_z;
+			if (etype3 == "AcDbLine" || (etype3 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))) {
+				
+				let x1, y1, z1, x2, y2, z2;
+				if (etype3 == "AcDbLine") {
+					x1 = item.start_x;
+					y1 = item.start_y;
+					z1 = item.start_z;
+					x2 = item.end_x;
+					y2 = item.end_y;
+					z2 = item.end_z;
+				} else {
+					x1 = item.x;
+					y1 = item.y;
+					z1 = item.z;
+					x2 = item.x_end;
+					y2 = item.y_end;
+					z2 = item.z_end;
+				}
+				
 				if (mode == "end" || mode == "corner") {
 					const d1 = (x - x1)*(x - x1) + (y - y1)*(y - y1) + (z - z1)*(z - z1);
 					const d2 = (x - x2)*(x - x2) + (y - y2)*(y - y2) + (z - z2)*(z - z2);
@@ -513,7 +549,7 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 					}
 				}
 			} else if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
-				etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) { 
+				etype3 == "AcDbText" || etype3 == "AcDbMText")) { 
 				const x1 = item.x;
 				const y1 = item.y;
 				const z1 = item.z;
@@ -561,7 +597,7 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 				let d = Infinity;
 				let etype3 = item.subclass;
 				if (etype3 && (etype3 == "AcDbPoint" || etype3  =="AcDbCircle" || etype3 == "AcDbEllipse" || 
-					etype3 == "AcDbText" || etype3 == "AcDbMText" || etype3 == "AcDbDimension")) { 
+					etype3 == "AcDbText" || etype3 == "AcDbMText")) { 
 					const x = item.x;
 					const y = item.y;
 					const z = item.z;
@@ -629,14 +665,25 @@ module.exports = (entity, etype, mode, list, list2, tolerance) => {
 						d = (x - (x1 + x2)/2)*(x - (x1 + x2)/2) + (y - (y1 + y2)/2)*(y - (y1 + y2)/2) + (z - (z1 + z2)/2)*(z - (z1 + z2)/2);
 					}
 					
-				} else if (etype3 == "AcDbLine") {
-					const x21 = item.start_x;
-					const y21 = item.start_y;
-					const z21 = item.start_z;
-					const x22 = item.end_x;
-					const y22 = item.end_y;
-					const z22 = item.end_z;
-					
+				} else if (etype3 && (etype3 == "AcDbLine" ||
+					(etype3 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')))) {	
+					let x21, y21, z21, x22, y22, z22;
+					if (etype3 == "AcDbLine") {
+						x21 = item.start_x;
+						y21 = item.start_y;
+						z21 = item.start_z;
+						x22 = item.end_x;
+						y22 = item.end_y;
+						z22 = item.end_z;	
+					} else {
+						x21 = item.x;
+						y21 = item.y;
+						z21 = item.z;
+						x22 = item.x_end;
+						y22 = item.y_end;
+						z22 = item.z_end;	
+					}		
+				
 					if (x1 == x21 && y1 == y21 && z1 == z21 && x2 == x22 && y2 == y22 && z2 == z22) {
 						return;
 					}

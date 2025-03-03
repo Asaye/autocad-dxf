@@ -13,7 +13,7 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 		return;
 	}
 	
-	if (etype == "AcDbLine") {		
+	if (etype == "AcDbLine" || (etype == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))) {		
 		let x, y;
 		if (Array.isArray(data)) {
 			x = data[0];
@@ -26,10 +26,19 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 		if (isNaN(x) || isNaN(y)) {
 			return false;
 		} else {
-			const x0 = item[`start_${ax1}`];
-			const x1 = item[`end_${ax1}`];
-			const y0 = item[`start_${ax2}`];
-			const y1 = item[`end_${ax2}`];
+			let x0, x1, y0, y1;
+			if (etype == "AcDbLine") {
+				x0 = item[`start_${ax1}`];
+				y0 = item[`start_${ax2}`];
+				x1 = item[`end_${ax1}`];				
+				y1 = item[`end_${ax2}`];
+			} else {
+				x0 = item[`${ax1}`];
+				y0 = item[`${ax2}`];
+				x1 = item[`${ax1}_end`];				
+				y1 = item[`${ax2}_end`];
+			}
+			
 			const m = (y0 - y1)/(x0 - x1);
 			if (Math.abs(m) == Infinity) {
 				return x == x0 && (y - y0)*(y - y1) < tolerance;
@@ -49,13 +58,25 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 		} else if (typeof data == "object") {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;				
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
+				let x0, x1, y0, y1;
+				if (etype2 == "AcDbLine") {
+					x0 = data[`start_${ax1}`];
+					y0 = data[`start_${ax2}`];
+					x1 = data[`end_${ax1}`];				
+					y1 = data[`end_${ax2}`];
+				} else {
+					x0 = data[`${ax1}`];
+					y0 = data[`${ax2}`];
+					x1 = data[`${ax1}_end`];				
+					y1 = data[`${ax2}_end`];
+				}
+				const startPointInside = checkInside([x0, y0], item, plane, getAxes, tolerance);				
+				const endPointInside = checkInside([x1, y1], item, plane, getAxes, tolerance);				
+				return startPointInside && endPointInside;
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];					
 				return checkInside(data, item, plane, getAxes, tolerance);
-			} else if (etype2 == "AcDbLine") {
-				const startPointInside = checkInside([data[`start_${ax1}`], data[`start_${ax2}`]], item, plane, getAxes, tolerance);				
-				const endPointInside = checkInside([data[`end_${ax1}`], data[`end_${ax2}`]], item, plane, getAxes, tolerance);				
-				return startPointInside && endPointInside;
 			} else if (etype2 == "AcDbPolyline") {
 				const vertices = data.vertices;
 				for (let i = 0; i < vertices.length; i++) {
@@ -109,11 +130,19 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 			return CheckPointInside(vertices, x, y, ax1, ax2);
 		} else if (typeof data == "object") {
 			const etype2 = data.subclass;
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
-				return CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
-			} else if (etype2 == "AcDbLine") {
-				let x0 = data[`start_${ax1}`], y0 = data[`start_${ax2}`];
-				let x1 = data[`end_${ax1}`], y1 = data[`end_${ax2}`];
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
+				let x0, x1, y0, y1;
+				if (etype2 == "AcDbLine") {
+					x0 = data[`start_${ax1}`];
+					y0 = data[`start_${ax2}`];
+					x1 = data[`end_${ax1}`];				
+					y1 = data[`end_${ax2}`];
+				} else {
+					x0 = data[`${ax1}`];
+					y0 = data[`${ax2}`];
+					x1 = data[`${ax1}_end`];				
+					y1 = data[`${ax2}_end`];
+				}
 				
 				const ipt = Intersection(data, item, plane, getAxes, tolerance);
 				
@@ -129,6 +158,8 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 				const endPointInside = CheckPointInside(vertices, x1, y1, ax1, ax2);
 				
 				return startPointInside && endPointInside;
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
+				return CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
 			} else if (etype2 == "AcDbPolyline") {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
 				const vert = data.vertices;
@@ -288,13 +319,25 @@ const checkInside = (data, item, plane, getAxes, tolerance) => {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;
 			
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
+				let x0, x1, y0, y1;
+				if (etype2 == "AcDbLine") {
+					x0 = data[`start_${ax1}`];
+					y0 = data[`start_${ax2}`];
+					x1 = data[`end_${ax1}`];				
+					y1 = data[`end_${ax2}`];
+				} else {
+					x0 = data[`${ax1}`];
+					y0 = data[`${ax2}`];
+					x1 = data[`${ax1}_end`];				
+					y1 = data[`${ax2}_end`];
+				}
+				const startPointInside = checkInside([x0, y0], item, plane, getAxes, tolerance);
+				const endPointInside = checkInside([x1, y1], item, plane, getAxes, tolerance);
+				return startPointInside && endPointInside;
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
 				data = [data[ax1], data[ax2]];
 				return checkInside(data, item, plane, getAxes, tolerance);
-			} else if (etype2 == "AcDbLine") {
-				const startPointInside = checkInside([data[`start_${ax1}`], data[`start_${ax2}`]], item, plane, getAxes, tolerance);
-				const endPointInside = checkInside([data[`end_${ax1}`], data[`end_${ax2}`]], item, plane, getAxes, tolerance);
-				return startPointInside && endPointInside;
 			} else if (etype2 == "AcDbPolyline") {
 				const vertices = data.vertices;
 				for (let i = 0; i < vertices.length; i++) {
@@ -325,11 +368,10 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
 		return;
 	}
-	
-	if (etype == "AcDbPoint" || etype == "AcDbMLine" || etype == "AcDbDimension" || etype == "AcDbAlignedDimension"
-		|| etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbSpline") {
+		
+	if (etype == "AcDbPoint" || etype == "AcDbMLine" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbSpline") {
 		return false;
-	} else if (etype == "AcDbLine") {		
+	} else if (etype == "AcDbLine" || (etype == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))) {		
 		let x, y;
 		if (Array.isArray(data)) {
 			x = data[0];
@@ -342,10 +384,18 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 		if (isNaN(x) || isNaN(y)) {
 			return false;
 		} else {
-			const x0 = item[`start_${ax1}`];
-			const x1 = item[`end_${ax1}`];
-			const y0 = item[`start_${ax2}`];
-			const y1 = item[`end_${ax2}`];
+			let x0, x1, y0, y1;
+			if (etype == "AcDbLine") {
+				x0 = item[`start_${ax1}`];
+				y0 = item[`start_${ax2}`];
+				x1 = item[`end_${ax1}`];				
+				y1 = item[`end_${ax2}`];
+			} else {
+				x0 = item[`${ax1}`];
+				y0 = item[`${ax2}`];
+				x1 = item[`${ax1}_end`];				
+				y1 = item[`${ax2}_end`];
+			}
 			const m = (y0 - y1)/(x0 - x1);
 			const intersection = Intersection(data, item, plane, getAxes, tolerance);
 			
@@ -374,18 +424,23 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 		} else if (typeof data == "object") {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;				
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
-				data = [data[ax1], data[ax2]];					
-				return checkOutside(data, item, plane, getAxes, tolerance);
-			} else if (etype2 == "AcDbLine") {
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
 				if (intersection.length > 1) {
 					return false;
 				} else {
-					const x0 = data[`start_${ax1}`];
-					const y0 = data[`start_${ax2}`];
-					const x1 = data[`end_${ax1}`];
-					const y1 = data[`end_${ax2}`];
+					let x0, x1, y0, y1;
+					if (etype2 == "AcDbLine") {
+						x0 = data[`start_${ax1}`];
+						y0 = data[`start_${ax2}`];
+						x1 = data[`end_${ax1}`];				
+						y1 = data[`end_${ax2}`];
+					} else {
+						x0 = data[`${ax1}`];
+						y0 = data[`${ax2}`];
+						x1 = data[`${ax1}_end`];				
+						y1 = data[`${ax2}_end`];
+					}
 					const startPointOutside = checkOutside([x0, y0], item, plane, getAxes, tolerance);				
 					const endPointOutside = checkOutside([x1, y1], item, plane, getAxes, tolerance);	
 					if (intersection.length == 1) {
@@ -398,6 +453,9 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 						return startPointOutside && endPointOutside;
 					}
 				}
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+				data = [data[ax1], data[ax2]];					
+				return checkOutside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbPolyline") {
 				const vertices = JSON.parse(JSON.stringify(data.vertices));	
 				if (data.type == "Closed") {
@@ -465,11 +523,19 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 			return !CheckPointInside(vertices, x, y, ax1, ax2);
 		} else if (typeof data == "object") {
 			const etype2 = data.subclass;
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
-				return !CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
-			} else if (etype2 == "AcDbLine") {
-				let x0 = data[`start_${ax1}`], y0 = data[`start_${ax2}`];
-				let x1 = data[`end_${ax1}`], y1 = data[`end_${ax2}`];
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
+				let x0, x1, y0, y1;
+				if (etype2 == "AcDbLine") {
+					x0 = data[`start_${ax1}`];
+					y0 = data[`start_${ax2}`];
+					x1 = data[`end_${ax1}`];				
+					y1 = data[`end_${ax2}`];
+				} else {
+					x0 = data[`${ax1}`];
+					y0 = data[`${ax2}`];
+					x1 = data[`${ax1}_end`];				
+					y1 = data[`${ax2}_end`];
+				}
 				
 				const ipt = Intersection(data, item, plane, getAxes, tolerance);				
 				const startPointInside = CheckPointInside(vertices, x0, y0, ax1, ax2);				
@@ -507,6 +573,8 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 					}
 				}
 				return true;
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {				
+				return !CheckPointInside(vertices, data[ax1], data[ax2], ax1, ax2);
 			} else if (etype2 == "AcDbPolyline") {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
 				const vert = data.vertices;
@@ -691,13 +759,22 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 			data = JSON.parse(JSON.stringify(data));
 			const etype2 = data.subclass;
 			
-			if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
-				data = [data[ax1], data[ax2]];
-				return !checkInside(data, item, plane, getAxes, tolerance);
-			} else if (etype2 == "AcDbLine") {
+			if (etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
-				const startPointOutside = checkOutside([data[`start_${ax1}`], data[`start_${ax2}`]], item, plane, getAxes, tolerance);
-				const endPointOutside = checkOutside([data[`end_${ax1}`], data[`end_${ax2}`]], item, plane, getAxes, tolerance);
+				let x0, x1, y0, y1;
+				if (etype2 == "AcDbLine") {
+					x0 = data[`start_${ax1}`];
+					y0 = data[`start_${ax2}`];
+					x1 = data[`end_${ax1}`];				
+					y1 = data[`end_${ax2}`];
+				} else {
+					x0 = data[`${ax1}`];
+					y0 = data[`${ax2}`];
+					x1 = data[`${ax1}_end`];				
+					y1 = data[`${ax2}_end`];
+				}
+				const startPointOutside = checkOutside([x0, y0], item, plane, getAxes, tolerance);
+				const endPointOutside = checkOutside([x1, y1], item, plane, getAxes, tolerance);
 				if (!intersection || intersection.length == 0) {
 					return startPointOutside && endPointOutside;
 				} else if (intersection.length > 1) {
@@ -705,14 +782,14 @@ const checkOutside = (data, item, plane, getAxes, tolerance) => {
 				} else {
 					const i = intersection[0];
 					const tangent = i.tangency_point;
-					const x0 = data[`start_${ax1}`];
-					const y0 = data[`start_${ax2}`];
-					const x1 = data[`end_${ax1}`];
-					const y1 = data[`end_${ax2}`];
+					
 					const endPt = ((Math.abs(i[ax1] - x0) < tolerance && Math.abs(i[ax2] - y0) < tolerance)) || 
 							      ((Math.abs(i[ax1] - x1) < tolerance && Math.abs(i[ax2] - y1) < tolerance));
 					return (startPointOutside || endPointOutside) && (tangent || endPt);
 				}
+			} else if (etype2 == "AcDbPoint" || etype2 == "AcDbText" || etype2 == "AcDbMText" || etype2 == "AcDbDimension") {
+				data = [data[ax1], data[ax2]];
+				return !checkInside(data, item, plane, getAxes, tolerance);
 			} else if (etype2 == "AcDbPolyline") {
 				const intersection = Intersection(data, item, plane, getAxes, tolerance);
 				if (!intersection || intersection.length == 0) {
@@ -776,13 +853,19 @@ const checkOnside = (data, item, plane, getAxes, tolerance) => {
 	const x = Array.isArray(data) ? data[0] : data[ax1];
 	const y = Array.isArray(data) ? data[1] : data[ax2];
 	
-	if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbDimension") {		
-		return Math.abs(x - item[ax1]) < tolerance && Math.abs(y - item[ax2]) < tolerance;
-	} else if (etype == "AcDbLine") {
-		const x0 = item[`start_${ax1}`];
-		const y0 = item[`start_${ax2}`];
-		const x1 = item[`end_${ax1}`];
-		const y1 = item[`end_${ax2}`];
+	if (etype == "AcDbLine" || (etype == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))) {
+		let x0, x1, y0, y1;
+		if (etype == "AcDbLine") {
+			x0 = item[`start_${ax1}`];
+			y0 = item[`start_${ax2}`];
+			x1 = item[`end_${ax1}`];				
+			y1 = item[`end_${ax2}`];
+		} else {
+			x0 = item[`${ax1}`];
+			y0 = item[`${ax2}`];
+			x1 = item[`${ax1}_end`];				
+			y1 = item[`${ax2}_end`];
+		}		
 		const m = (y1 - y0)/(x1 - x0);		
 		if (Math.abs(m) == Infinity) {			
 			return (y0 - y)*(y1 - y) < tolerance && (Math.abs(x - x0) <= tolerance);
@@ -790,6 +873,8 @@ const checkOnside = (data, item, plane, getAxes, tolerance) => {
 			const isInside = (x0 - x)*(x1 - x) < tolerance && (y0 - y)*(y1 - y) < tolerance;			
 			return isInside && (Math.abs(y - (m*(x - x1) + y1)) <= tolerance);
 		}		
+	} else if (etype == "AcDbPoint" || etype == "AcDbText" || etype == "AcDbMText" || etype == "AcDbDimension") {		
+		return Math.abs(x - item[ax1]) < tolerance && Math.abs(y - item[ax2]) < tolerance;
 	} else if (etype == "AcDbCircle" && item.etype == "CIRCLE") {
 		const xc = item[ax1];
 		const yc = item[ax2];
@@ -953,15 +1038,32 @@ const checkParallel = (data, item, plane, getAxes, tolerance, getCorners) => {
 		return;
 	}	
 	
-	if ((etype1 == "AcDbLine") && (etype2 == "AcDbLine")) {
-		const x11 = data[`start_${ax1}`];
-		const y11 = data[`start_${ax2}`];
-		const x12 = data[`end_${ax1}`];
-		const y12 = data[`end_${ax2}`];
-		const x21 = item[`start_${ax1}`];
-		const y21 = item[`start_${ax2}`];
-		const x22 = item[`end_${ax1}`];
-		const y22 = item[`end_${ax2}`];	
+	if ((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) &&
+		(etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')))) {
+		let x11, y11, x12, y12, x21, y21, x22, y22;
+		if (etype1 == "AcDbLine") {
+			x11 = data[`start_${ax1}`];
+			y11 = data[`start_${ax2}`];
+			x12 = data[`end_${ax1}`];
+			y12 = data[`end_${ax2}`];
+		} else {
+			x11 = data[`${ax1}`];
+			y11 = data[`${ax2}`];
+			x12 = data[`${ax1}_end`];
+			y12 = data[`${ax2}_end`];
+		}
+		if (etype2 == "AcDbLine") {
+			x21 = item[`start_${ax1}`];
+			y21 = item[`start_${ax2}`];
+			x22 = item[`end_${ax1}`];
+			y22 = item[`end_${ax2}`];	
+		} else {
+			x21 = item[`${ax1}`];
+			y21 = item[`${ax2}`];
+			x22 = item[`${ax1}_end`];
+			y22 = item[`${ax2}_end`];	
+		}				
+		
 		const len1 = Math.sqrt((x11 - x12)*(x11 - x12) + (y11 - y12)*(y11 - y12));
 		const len2 = Math.sqrt((x21 - x22)*(x21 - x22) + (y21 - y22)*(y21 - y22));
 		const dotproduct = ((x11 - x12)*(x21 - x22) + (y11 - y12)*(y21 - y22))/(len1*len2);
@@ -1089,23 +1191,41 @@ const checkOrthogonal = (data, item, plane, getAxes, tolerance) => {
 		return;
 	}		
 	
-	if ((etype1 == "AcDbLine") && (etype2 == "AcDbLine")) {
-		const x11 = data[`start_${ax1}`];
-		const y11 = data[`start_${ax2}`];
-		const x12 = data[`end_${ax1}`];
-		const y12 = data[`end_${ax2}`];
-		const x21 = item[`start_${ax1}`];
-		const y21 = item[`start_${ax2}`];
-		const x22 = item[`end_${ax1}`];
-		const y22 = item[`end_${ax2}`];	
+	if ((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) &&
+		(etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')))) {
+		let x11, y11, x12, y12, x21, y21, x22, y22;
+		if (etype1 == "AcDbLine") {
+			x11 = data[`start_${ax1}`];
+			y11 = data[`start_${ax2}`];
+			x12 = data[`end_${ax1}`];
+			y12 = data[`end_${ax2}`];
+		} else {
+			x11 = data[`${ax1}`];
+			y11 = data[`${ax2}`];
+			x12 = data[`${ax1}_end`];
+			y12 = data[`${ax2}_end`];
+		}
+		if (etype2 == "AcDbLine") {
+			x21 = item[`start_${ax1}`];
+			y21 = item[`start_${ax2}`];
+			x22 = item[`end_${ax1}`];
+			y22 = item[`end_${ax2}`];	
+		} else {
+			x21 = item[`${ax1}`];
+			y21 = item[`${ax2}`];
+			x22 = item[`${ax1}_end`];
+			y22 = item[`${ax2}_end`];	
+		}				
+		
 		const m1 = (y12 - y11)/(x12 - x11);
 		const m2 = (y22 - y21)/(x22 - x21);
+		
 		if (Math.abs(m1) != Infinity && Math.abs(m2) == Infinity) {
 			return Math.abs(m1) < tolerance && (y11 - y21)*(y11 - y22) < tolerance && (x21 - x11)*(x21 - x12) < tolerance;
 		} else if (Math.abs(m2) != Infinity && Math.abs(m1) == Infinity) {
 			return Math.abs(m2) < tolerance && (y21 - y11)*(y21 - y12) < tolerance && (x11 - x21)*(x11 - x22) < tolerance;
 		} else if (Math.abs(m2) != Infinity && Math.abs(m1) != Infinity) {
-			const intersection = Intersection(data, item, plane, getAxes, tolerance);
+			const intersection = Intersection(data, item, plane, getAxes, tolerance);			
 			if (!intersection || intersection.length != 1) {
 				return false;
 			}			
@@ -1150,15 +1270,32 @@ const checkAligned = (data, item, plane, getAxes, tolerance) => {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
 		return;
 	}		
-	if ((etype1 == "AcDbLine") && (etype2 == "AcDbLine")) {
-		const x11 = data[`start_${ax1}`];
-		const y11 = data[`start_${ax2}`];
-		const x12 = data[`end_${ax1}`];
-		const y12 = data[`end_${ax2}`];
-		const x21 = item[`start_${ax1}`];
-		const y21 = item[`start_${ax2}`];
-		const x22 = item[`end_${ax1}`];
-		const y22 = item[`end_${ax2}`];	
+	if ((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (data.specific_type == 'AcDbRotatedDimension' || data.specific_type == 'AcDbAlignedDimension'))) &&
+		(etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')))) {
+		let x11, y11, x12, y12, x21, y21, x22, y22;
+		if (etype1 == "AcDbLine") {
+			x11 = data[`start_${ax1}`];
+			y11 = data[`start_${ax2}`];
+			x12 = data[`end_${ax1}`];
+			y12 = data[`end_${ax2}`];
+		} else {
+			x11 = data[`${ax1}`];
+			y11 = data[`${ax2}`];
+			x12 = data[`${ax1}_end`];
+			y12 = data[`${ax2}_end`];
+		}
+		if (etype2 == "AcDbLine") {
+			x21 = item[`start_${ax1}`];
+			y21 = item[`start_${ax2}`];
+			x22 = item[`end_${ax1}`];
+			y22 = item[`end_${ax2}`];	
+		} else {
+			x21 = item[`${ax1}`];
+			y21 = item[`${ax2}`];
+			x22 = item[`${ax1}_end`];
+			y22 = item[`${ax2}_end`];	
+		}		
+		
 		const m1 = (y12 - y11)/(x12 - x11);
 		const m2 = (y22 - y21)/(x22 - x21);
 		if (Math.abs(m1) == Infinity && Math.abs(m2) == Infinity) {
@@ -1169,7 +1306,7 @@ const checkAligned = (data, item, plane, getAxes, tolerance) => {
 			return Math.abs(m2) > 10000 && Math.abs(x11 - x21) < tolerance;
 		} else {
 			const b1 = y11 - m1*x11;
-			const b2 = y21 - m2*x21;			
+			const b2 = y21 - m2*x21;		
 			return Math.abs(m1 - m2) < tolerance && Math.abs(b1 - b2) < tolerance;
 		} 
 	} else if (etype1 == "AcDbCircle" && etype2 == "AcDbCircle") {
@@ -1211,7 +1348,32 @@ const checkConvex = (line1, line2, plane, getAxes, tolerance) => {
 		return;
 	}
 	let p1, p2, p3;
-	if (line1.subclass == "AcDbLine" && line2.subclass == "AcDbLine") {
+	if ((line1.subclass == "AcDbLine" || (line1.subclass == "AcDbDimension" && (line1.specific_type == 'AcDbRotatedDimension' || line1.specific_type == 'AcDbAlignedDimension'))) &&
+		(line2.subclass == "AcDbLine" || (line2.subclass == "AcDbDimension" && (line2.specific_type == 'AcDbRotatedDimension' || line2.specific_type == 'AcDbAlignedDimension')))) {
+		let x11, y11, x12, y12, x21, y21, x22, y22;
+		if (line1.subclass == "AcDbLine") {
+			x11 = line1[`start_${ax1}`];
+			y11 = line1[`start_${ax2}`];
+			x12 = line1[`end_${ax1}`];
+			y12 = line1[`end_${ax2}`];
+		} else {
+			x11 = line1[`${ax1}`];
+			y11 = line1[`${ax2}`];
+			x12 = line1[`${ax1}_end`];
+			y12 = line1[`${ax2}_end`];
+		}
+		if (line2.subclass == "AcDbLine") {
+			x21 = line2[`start_${ax1}`];
+			y21 = line2[`start_${ax2}`];
+			x22 = line2[`end_${ax1}`];
+			y22 = line2[`end_${ax2}`];	
+		} else {
+			x21 = line2[`${ax1}`];
+			y21 = line2[`${ax2}`];
+			x22 = line2[`${ax1}_end`];
+			y22 = line2[`${ax2}_end`];	
+		}			
+		
 		const intersection = Intersection(line1, line2, plane, getAxes, tolerance);
 		if (!intersection || intersection.length == 0) return false;
 		
@@ -1219,17 +1381,17 @@ const checkConvex = (line1, line2, plane, getAxes, tolerance) => {
 		const y = intersection[0][`${ax2}`];
 		p2 = [x, y];
 		
-		if (Math.abs(line1[`start_${ax1}`] - x) < tolerance && Math.abs(line1[`start_${ax2}`] - y) < tolerance) {
-			p1 = [line1[`end_${ax1}`], line1[`end_${ax2}`]];
-		} else if (Math.abs(line1[`end_${ax1}`] - x) < tolerance && Math.abs(line1[`end_${ax2}`] - y) < tolerance) {
-			p1 = [line1[`start_${ax1}`], line1[`start_${ax2}`]];
+		if (Math.abs(x11 - x) < tolerance && Math.abs(y11 - y) < tolerance) {
+			p1 = [x12, y12];
+		} else if (Math.abs(x12 - x) < tolerance && Math.abs(y12 - y) < tolerance) {
+			p1 = [x11, y11];
 		} else {
 			return false;
 		}
-		if (Math.abs(line2[`start_${ax1}`] - x) < tolerance && Math.abs(line2[`start_${ax2}`] - y) < tolerance) {
-			p3 = [line2[`end_${ax1}`], line2[`end_${ax2}`]];
-		} else if (Math.abs(line2[`end_${ax1}`] - x) < tolerance && Math.abs(line2[`end_${ax2}`] - y) < tolerance) {
-			p3 = [line2[`start_${ax1}`], line2[`start_${ax2}`]];
+		if (Math.abs(x21 - x) < tolerance && Math.abs(y21 - y) < tolerance) {
+			p3 = [x22, y22];
+		} else if (Math.abs(x21 - x) < tolerance && Math.abs(y22 - y) < tolerance) {
+			p3 = [x21, y21];
 		} else {
 			return false;
 		}

@@ -12,29 +12,41 @@ module.exports = (entity, etypes, plane, entities, getAxes, tolerance) => {
 		return;
 	}
 	
-	const txt = JSON.stringify(entity);	
+	
 	let filtered;
+	const entity_text = JSON.stringify(entity);
 	if (etypes && Array.isArray(etypes)) {
 		filtered = entities.filter((item, index) => {
-			if (JSON.stringify(item) == txt) return false;
+			if (JSON.stringify(item) == entity_text) return false;
 			return (etypes && Array.isArray(etypes) && etypes.filter((en) => (("acdb" + en.toLowerCase()) == item.subclass.toLowerCase()) || (item.specific_type && ("acdb" + en.toLowerCase()) == item.specific_type.toLowerCase())).length > 0);
 		});
 	} else {
-		filtered = entities;
+		filtered = entities.filter((item) => JSON.stringify(item) != entity_text);
 	}
 		
 	
 	let crossing = [];	
 	const etype = entity.etype;
 	
-	filtered.forEach((item) => {		
-		const points = Intersection(entity, item, plane, getAxes, tolerance);		
+	filtered.forEach((item) => {
+	
+		const points = Intersection(entity, item, plane, getAxes, tolerance);	
+
 		if (points && points.length > 0) {
 			if (etype == "LINE") {
 				for (let i = 0; i < points.length; i++) {
 					if (crossing.indexOf(item) != -1) continue;
 					if ((Math.abs(points[i][ax1] - entity[`start_${ax1}`]) > tolerance || Math.abs(points[i][ax2] - entity[`start_${ax2}`]) > tolerance) && 
 						(Math.abs(points[i][ax1] - entity[`end_${ax1}`]) > tolerance || Math.abs(points[i][ax2] - entity[`end_${ax2}`]) > tolerance)) {
+						crossing.push(item);
+						break;
+					}
+				}
+			} else if (etype == "DIMENSION" && (entity.specific_type == 'AcDbRotatedDimension' || entity.specific_type == 'AcDbAlignedDimension')) {
+				for (let i = 0; i < points.length; i++) {
+					if (crossing.indexOf(item) != -1) continue;
+					if ((Math.abs(points[i][ax1] - entity[`${ax1}`]) > tolerance || Math.abs(points[i][ax2] - entity[`${ax2}`]) > tolerance) && 
+						(Math.abs(points[i][ax1] - entity[`${ax1}_end`]) > tolerance || Math.abs(points[i][ax2] - entity[`${ax2}_end`]) > tolerance)) {
 						crossing.push(item);
 						break;
 					}
@@ -83,6 +95,14 @@ module.exports = (entity, etypes, plane, entities, getAxes, tolerance) => {
 									crossing.push(item);
 									break;
 								}
+							} else if (item.etype == "DIMENSION" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')) {								
+								if ((Math.abs(item[`${ax1}`] - points[i][ax1]) > tolerance || 
+								    Math.abs(item[`${ax2}`] - points[i][ax2]) > tolerance) &&
+									(Math.abs(item[`${ax1}_end`] - points[i][ax1]) > tolerance ||
+									Math.abs(item[`${ax2}_end`] - points[i][ax2]) > tolerance)) {									
+									crossing.push(item);
+									break;
+								}
 							} else if (item.etype == "LWPOLYLINE") {
 								const v = JSON.parse(JSON.stringify(item.vertices));
 								if (item.type == "Closed") {
@@ -126,7 +146,8 @@ module.exports = (entity, etypes, plane, entities, getAxes, tolerance) => {
 					if ((entity.radius + item.radius - d) > tolerance) {
 						crossing.push(item);
 					}
-				} else if (item.etype == "LINE" && points.length > 1) {
+				} else if ((item.etype == "LINE" || (item.etype == "DIMENSION" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))) 
+					&& points.length > 1) {
 					crossing.push(item);
 				} else if (item.etype == "LINE" && points.length == 1) {						
 					if ((Math.abs(points[0][ax1] - item[`start_${ax1}`]) > tolerance || Math.abs(points[0][ax2] - item[`start_${ax2}`]) > tolerance) && 
@@ -136,6 +157,18 @@ module.exports = (entity, etypes, plane, entities, getAxes, tolerance) => {
 						if (Math.abs(slope) == Infinity && Math.abs(Math.abs(entity[ax1] - points[0][ax1]) - entity.radius) > tolerance) {
 							crossing.push(item);
 						} else if (Math.abs((-slope*entity[ax1] + entity[ax2] + slope*item[`start_${ax1}`] - item[`start_${ax2}`])/(Math.sqrt(1 + slope*slope))) < entity.radius) {
+							crossing.push(item);
+						}
+					}					
+				} else if ((item.etype == "DIMENSION" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))
+					&& points.length == 1) {						
+					if ((Math.abs(points[0][ax1] - item[`${ax1}`]) > tolerance || Math.abs(points[0][ax2] - item[`${ax2}`]) > tolerance) && 
+						(Math.abs(points[0][ax1] - item[`${ax1}_end`]) > tolerance || Math.abs(points[0][ax2] - item[`${ax2}_end`]) > tolerance)) {
+						
+						const slope = (item[`${ax2}`] - item[`${ax2}_end`])/(item[`${ax1}`] - item[`${ax1}_end`]);
+						if (Math.abs(slope) == Infinity && Math.abs(Math.abs(entity[ax1] - points[0][ax1]) - entity.radius) > tolerance) {
+							crossing.push(item);
+						} else if (Math.abs((-slope*entity[ax1] + entity[ax2] + slope*item[`${ax1}`] - item[`${ax2}`])/(Math.sqrt(1 + slope*slope))) < entity.radius) {
 							crossing.push(item);
 						}
 					}					

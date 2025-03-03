@@ -62,6 +62,11 @@ const getEndPoints = (item, ax1, ax2) => {
 		y_left = item[`start_${ax2}`];		
 		x_right = item[`end_${ax1}`];
 		y_right = item[`end_${ax2}`];		
+	} else if (etype == "DIMENSION" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension')) {
+		x_left = item[`${ax1}`];
+		y_left = item[`${ax2}`];		
+		x_right = item[`${ax1}_end`];
+		y_right = item[`${ax2}_end`];		
 	} else if (etype == "ARC") {
 		x_left = item[ax1] + item.radius*Math.cos(item.start_angle*Math.PI/180);
 		y_left = item[ax2] + item.radius*Math.sin(item.start_angle*Math.PI/180);		
@@ -91,7 +96,7 @@ const getEndPoints = (item, ax1, ax2) => {
 };
 
 module.exports = (entity, plane, entities, getAxes, tolerance) => {
-	if (typeof entity != "object" || typeof entities != "object") {
+	if (typeof entity != "object" || typeof entities != "object" || (plane && typeof plane != "string")) {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
 		return;
 	}
@@ -105,7 +110,8 @@ module.exports = (entity, plane, entities, getAxes, tolerance) => {
 	
 	const filtered = entities.filter((item, index) => {
 				if (JSON.stringify(item) == txt) return false;
-				return (item.etype == "LINE" || (item.etype == "ELLIPSE" && (Math.abs(item.start_parameter - item.end_parameter) - tolerance) < 2*Math.PI) ||
+				return (item.etype == "LINE" || (item.etype == "DIMENSION" && (item.specific_type == 'AcDbRotatedDimension' || item.specific_type == 'AcDbAlignedDimension'))
+				|| (item.etype == "ELLIPSE" && (Math.abs(item.start_parameter - item.end_parameter) - tolerance) < 2*Math.PI) ||
 				item.etype == "ARC" || (item.etype == "LWPOLYLINE" && item.etype != "Closed" && 
 					((item.vertices[0][ax1] !== undefined && (Math.abs(item.vertices[0][ax1] - item.vertices[item.vertices.length - 1][ax1]) > tolerance)) || 
 					((item.vertices[0][ax2] !== undefined && (Math.abs(item.vertices[0][ax2] - item.vertices[item.vertices.length - 1][ax2]) > tolerance))))));

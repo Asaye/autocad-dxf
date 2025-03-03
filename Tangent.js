@@ -11,16 +11,25 @@ const istangent = (line, circle, plane, getAxes, tolerance) => {
 		throw new Error(ErrorMessages.INCORRECT_PARAMS);
 		return;
 	}
+	let x0, y0, x1, y1;
+	if (line.subclass == "AcDbDimension" && (line.specific_type == 'AcDbRotatedDimension' || line.specific_type == 'AcDbAlignedDimension')) {
+		x0 = line[`${ax1}`];
+		y0 = line[`${ax2}`];
+		x1 = line[`${ax1}_end`];
+		y1 = line[`${ax2}_end`];
+	} else {
+		x0 = line[`start_${ax1}`];
+		y0 = line[`start_${ax2}`];
+		x1 = line[`end_${ax1}`];
+		y1 = line[`end_${ax2}`];
+	}
 	
-	const x0 = line[`start_${ax1}`];
-	const y0 = line[`start_${ax2}`];
-	const x1 = line[`end_${ax1}`];
-	const y1 = line[`end_${ax2}`];
 	const slope = (y1 - y0)/(x1 - x0);
+	
 	if (Math.abs(slope) == Infinity) {
 		return Math.abs(Math.abs(circle[ax1] - x0) - circle.radius) < tolerance;
 	} else {
-		const len = Math.abs(-slope*circle[ax1] + circle[ax2] + slope*x0 - y0)/(Math.sqrt(1 + slope*slope));		
+		const len = Math.abs(-slope*circle[ax1] + circle[ax2] + slope*x0 - y0)/(Math.sqrt(1 + slope*slope));
 		return Math.abs(len - circle.radius) < tolerance;
 	}
 	return false;

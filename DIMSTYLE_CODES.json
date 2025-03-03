@@ -38,7 +38,8 @@
 	"176" : "dim_line_color",
 	"177" : "ext_line_color",
 	"178" : "text_color",
-	"179" : "angle_precision",	
+	"179" : "angle_precision",
+	"270" : "dim_units2",
 	"271" : "precision",
 	"272" : "tolerance_precision",
 	"273" : "alt_format",
@@ -59,5 +60,14 @@
 	"340" : "text_style",
 	"371" : "dim_line_weight",
 	"372" : "ext_line_weight",
-	"booleans": ["73", "74", "75", "76", "170", "172", "174", "175", "281", "282"]
+	"booleans": ["73", "74", "75", "76", "170", "172", "174", "175", "281", "282"],
+	"text_pos_hor": ["Centered", "First extension line", "Second extension line", "Over first extension", "Over second extension"],
+	"text_pos_vert": ["Centered", "Above dimension line", "Outside", "Japanese Industry Standards (JIS)", "Below dimension line"],
+	"angle_format": ["Decimal degrees", "Degrees/minutes/seconds", "Gradians", "Radians", "Surveyor's units"],
+	"dim_units": ["", "Scientific", "Decimal", "Engineering", "Architectural", "Fractional", "Windows desktop"],
+	"dim_units2": ["", "Scientific", "Decimal", "Engineering", "Architectural (stacked)", "Fractional (stacked)", "Architectural", "Fractional"],	
+	"text_movement": ["Keep dim line with text", "Move text, add leader", "Move text, no leader"],
+	"tolerance_pos_vert": ["Top", "Middle", "Bottom"],
+	"fit": ["Text and Arrows", "Arrows only", "Text only", "Best fit"],
+	"type": ["Rotated, horizontal, or vertical", "Aligned", "Angular", "Diameter", "Radius", "Angular 3 point", "Ordinate"]
 }

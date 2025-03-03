@@ -59,7 +59,9 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 ```
 
 ### New updates in this version
-- A new property ```where``` is added to ```filter``` function. It is now possible to filter entities in reference to (inside, outside, on, ...) other entities.
+- Coordinate system ```0-1``` is included among possible values of ```plane``` parameter to allow possibility for working with arrays in addition to JSON objects. 
+- New properties: ```user_defined_dim_text_position```, ```x_end```, ```y_end```, ```z_end``` are added to aligned or rotated ```AcDbDimension```. The coordinates for both end points of aligned and rotated dimension lines can now be obtained. 
+- Support for aligned and rotated dimension lines is included in ```checkif```, ```distance```, ```closest```, ```intersection```, ```connected```, ```crossing```, ```istangent``` and ```filter``` functions.
 
 # Constructor
 
@@ -106,7 +108,8 @@ console.log(res.blocks);
 ``` 
 ### Custom keys 
 
-For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json)) property while the corresponding AutoCAD codes can be referred via the ```CODES``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)) property.
+For the ease of convenience, the ```blocks```, ```entities``` and ```tables``` properties discussed above use custom keys instead of the AutoCAD dxf codes. If desired, all the custom keys used in this module can be accessed using ```KEYS``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/KEYS.json)) property while the corresponding AutoCAD codes can be referred via the ```CODES``` ([link](https://github.com/Asaye/autocad-dxf/blob/main/CODES.json)) property. For ```AcDbDimensions```, there might be additional keys as described here ([link](https://github.com/Asaye/autocad-dxf/blob/main/DIMSTYLE_CODES.json)).
+
 ```
 const Entities = require("autocad-dxf");
 const data = "DATA_FROM_DXF_FILE";
@@ -235,15 +238,17 @@ The output for this example can be found [here](https://github.com/Asaye/autocad
 
 This function is used to check if ```entity1``` fulfils a ```criteria``` with respect to ```entity2```. The ```criteria``` parameter can be one of ```inside```, ```outside```, ```on```, ```parallel```, ```orthogonal```, ```aligned```, ```delaunay``` or ```convex```. 
 The applicable combinations of ```criteria```, ```entity1``` and ```entity2``` are given below. In all cobinations, wherever ```entity1``` or ```entity2```  is ```AcDbPoint``` (point), a shorthand array form of ```[x, y]``` (based on the used ```plane``` as described below) can be passed as an entity. 
+In addition, an aligned or rotated dimension ```AcDbDimension``` (with ```specific_type``` of ```AcDbRotatedDimension``` or ```AcDbAlignedDimension```) will have the same functionality as  ```AcDbLine``` (line) where are the rest types of dimension lines will have the same functionality as  ```AcDbPoint``` (point). 
+
 
 
 <table>
     <tr><td><a name="checkif"><code>criteria</code></a></td><td><code>etype1</code></td><td><code>etype2</code></td><td style="font-weight: 700">Remark</td></tr>
     <tr><td rowspan="4">inside/outside</td><td>point</td><td>line</td></tr>
-	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc/ dimension line</td><td>circle</td><td rowspan="3"><ul><li><small>An entity is considered to be inside/outside another entity if its whole part (except its end points which can be on the edges of the other entity) is inside/outside the other entity</small></li><li><small>For text, mtext and dimension line, only the alignment point is considered. The whole text/dimension line might not be inside/outside.</small></li></ul></td></tr>
-	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc/ ellipse/ dimension line</td><td>polyline</td></tr>  
-	<tr><td>point/ text/ mtext/ line/ polyline/ dimension line</td><td>ellipse</td></tr>  
-	<tr><td>on</td><td>point/text/mtext/dimension line</td><td>point/ text/ mtext/ line/ circle/ arc/ ellipse/ spline/dimension line</td><td><ul><li><small>points at the end points of splines are not considered to be inside</small></li></ul></td></tr>
+	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc</td><td>circle</td><td rowspan="3"><ul><li><small>An entity is considered to be inside/outside another entity if its whole part (except its end points which can be on the edges of the other entity) is inside/outside the other entity</small></li><li><small>For text, mtext and dimension line, only the alignment point is considered. The whole text/dimension line might not be inside/outside.</small></li></ul></td></tr>
+	<tr><td>point/ text/ mtext/ line/ polyline/ circle/ arc/ ellipse</td><td>polyline</td></tr>  
+	<tr><td>point/ text/ mtext/ line/ polyline</td><td>ellipse</td></tr>  
+	<tr><td>on</td><td>point/text/mtext</td><td>point/ text/ mtext/ line/ circle/ arc/ ellipse/ spline</td><td><ul><li><small>points at the end points of splines are not considered to be inside</small></li></ul></td></tr>
 	<tr><td rowspan="3">aligned</td><td>line</td><td>line</td></tr>
 	<tr><td>circle/arc</td><td>circle/arc</td></tr>
 	<tr><td>ellipse</td><td>ellipse</td></tr>
@@ -390,9 +395,9 @@ Get the circumference of a circle.
 This function is used to determine the shortest distance between two entities: ```entity1``` and ```entity2``` as described below. Both or one of these entities can be a one-dimensional array with a format of: ```[x, y]```.
 + If both  ```entity1``` and ```entity2``` are points (```AcDbPoint```) or texts(```AcDbText/AcDbMText```) or vertices(```AcDbVertex```) or arrays  or any combination of these, the distance between the two points will be returned.
 + If both  ```entity1``` and ```entity2``` are circles or arcs or ellipses or any combination of these, the distance between the centers will be returned.
-+ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a line, the perpendicular distance between the point/center to (extension of) the line will be returned.
++ If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a line or aligned or rotated dimension line, the perpendicular distance between the point/center to (extension of) the line/dimension line will be returned.
 + If either  ```entity1``` or ```entity2``` is a array/point/circle/text/vertex/ellipse and the other parameter is a polyline, the perpendicular distance between the point/center to (extension of) the closest edge will be returned.
-+ If both  ```entity1``` or ```entity2``` are lines which are parallel, the perpendicular distance between (extensions of) the lines will be returned. If the lines are not parallel, ```undefined``` is returned.
++ If both  ```entity1``` or ```entity2``` are lines or aligned or rotated dimension lines which are parallel, the perpendicular distance between (extensions of) the lines will be returned. If the lines are not parallel, ```undefined``` is returned.
 + If the passed parameters are none of the above combinations, ```undefined``` is returned.
 
 The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
@@ -435,7 +440,7 @@ Get the closest distance between a circle and a line.
 
 #### &#x1F537; closest(entity :object, [etype :array], [mode :string], [list :array]): 
 
-This function is used to obtain the closest entity to a given ```entity``` which is passed as the first parameter. It is applicable for points (```AcDbPoint```), circles(```AcDbCircle```), ellipses (```AcDbEllipse```), texts (```AcDbText``` or ```AcDbMText```), dimension lines (```AcDbDimension```), lines (```AcDbLine```), polylines (```AcDbPolyline```) and splines [where control points are used] (```AcDbSpline```).
+This function is used to obtain the closest entity to a given ```entity``` which is passed as the first parameter. It is applicable for points (```AcDbPoint```), circles(```AcDbCircle```), ellipses (```AcDbEllipse```), texts (```AcDbText``` or ```AcDbMText```), aligned or rotated dimension lines (```AcDbDimension``` with ```AcDbAlignedDimension``` or ```AcDbRotatedDimension```), lines (```AcDbLine```), polylines (```AcDbPolyline```) and splines [where control points are used] (```AcDbSpline```).
 The optional second parameter, ```etype```, is an array parameter which can be used to specify the list of possible types of entities which need to be considered while obtaining the closest entity. The possible values for the elements of ```etype``` array are: <code>point</code>, <code>line</code>, <code>mline</code>, <code>circle</code>, <code>polyline</code>, <code>dimension</code>, <code>text</code>, <code>mtext</code>, <code>spline</code>, <code>ellipse</code>, <code>arc</code>. If this parameter is not provided, any type of entity which is closest to the given ```entity``` parameter will be returned. 
 The optional third parameter is used to define the mode of distance calculation for the determination of the closest entity. The possible values are:
 + ```center``` - (default value) - to determine the closest entity based on distances from a center point, (for lines, splines and polylines, end points or corner points to the center of the given entity will be determined)
@@ -463,8 +468,10 @@ Get the closest all types of texts to one of the ends of a given line (say the l
 #### &#x1F537; intersection(entity1 :object, entity2 :object [, plane :string]): 
 
 This function is used to determine the intersection point/s of two entities: ```entity1``` and ```entity2```. The return type is an array of intersection points with each element of the form ```{x: 123.45, y: 678.90}```. If there is no intersection point, an empty array will be returned. The ```entity1``` and ```entity2``` parameters can be a combination of (both ways): 
-+ ```line``` and ```line/polyline/circle/arc/ellipse```.
-+ ```circle/arc``` and ```polyline/circle/arc```.
++ ```line``` and ```line/dimension/polyline/circle/arc/ellipse```.
++ ```circle/arc``` and ```dimension/polyline/circle/arc```.
+
+PS: For ```dimension```, only aligned or rotated dimension lines with ```specific_type``` of ```AcDbRotatedDimension```  or ```AcDbAlignedDimension``` are applicable.
 
 The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
@@ -512,7 +519,7 @@ Get the intersection points of a circle and a line.
 
 #### &#x1F537; connected(entity :object [, plane :string]): 
 
-This function is used to obtain all the entities which are forming a chain with a given ```entity``` which is passed as the first parameter. Only end point to end point connections are considered and if multiple branches exist, only one arbitrary direction is followed to get the concatenated entities. The return type is an object with two keys: ```left``` and ```right``` where the associated values are one-dimensional arrays of entities which are connected (exclusive) to the given entity on the left and right sides respectively. The function is applicable for lines, open polylines, arcs and open ellipses.  
+This function is used to obtain all the entities which are forming a chain with a given ```entity``` which is passed as the first parameter. Only end point to end point connections are considered and if multiple branches exist, only one arbitrary direction is followed to get the concatenated entities. The return type is an object with two keys: ```left``` and ```right``` where the associated values are one-dimensional arrays of entities which are connected (exclusive) to the given entity on the left and right sides respectively. The function is applicable for lines, aligned or rotated dimension lines, open polylines, arcs and open ellipses.  
 
 The optional <code>plane</code> parameter specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 
@@ -537,7 +544,7 @@ Get the all the elements which are connected to the first element of ```entities
 
 #### &#x1F537; crossing(entity :object [, etype :array, plane :string]): 
 
-This function is used to obtain all the entities which cross a given ```entity``` (passed as the first parameter). This function is applicable for lines, circles, arcs and polylines and the optional second parameter, ```etype```, (with array data type) is used to specify the desired types of crossing entities among these. The possible values for the elements of the array are: <code>line</code>, <code>polyline</code>, <code>circle</code>, and <code>arc</code>. If not given, all these four entity types will be considered. 
+This function is used to obtain all the entities which cross a given ```entity``` (passed as the first parameter). This function is applicable for lines, aligned or rotated dimension lines, circles, arcs and polylines and the optional second parameter, ```etype```, (with array data type) is used to specify the desired types of crossing entities among these. The possible values for the elements of the array are: <code>line</code>, <code>dimension</code>, <code>polyline</code>, <code>circle</code>, and <code>arc</code>. If not given, all these four entity types will be considered. For ```dimension```, only aligned or rotated dimension lines with ```specific_type``` of ```AcDbRotatedDimension```  or ```AcDbAlignedDimension``` are applicable.
 
 The function returns an array of entities which cross the given entity.
 
@@ -557,7 +564,7 @@ Get the all lines and circles which are crossing the to the first element of ```
 
 #### &#x1F537; istangent(line: object, circle :object [, plane :string]): 
 
-This function is used to check if a ```line``` (provided as the first parameter) is tangent to a ```circle``` (provided as the second parameter). The function returns ```true``` if the ```line``` is tangent to the ```circle``` or ```false``` otherwise.
+This function is used to check if a ```line``` (provided as the first parameter) is tangent to a ```circle``` (provided as the second parameter). The ```line``` parameter can also be an aligned or rotated dimension line. The function returns ```true``` if the ```line``` is tangent to the ```circle``` or ```false``` otherwise.
 
 The optional third parameter <code>plane</code> specifies the applicable plane. Its possible values are ```x-y``` (or ```y-x```), ```y-z```(or ```z-y```), and ```x-z```(or ```z-x```). If not given, ```x-y``` will be used.
 

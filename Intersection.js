@@ -14,15 +14,33 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 	const etype1 = entity1.subclass;		
 	const etype2 = entity2.subclass;
 
-	if (etype1 == "AcDbLine" && etype2 == "AcDbLine") {
-		const x11 = entity1[`start_${ax1}`];
-		const y11 = entity1[`start_${ax2}`];
-		const x12 = entity1[`end_${ax1}`];
-		const y12 = entity1[`end_${ax2}`];
-		const x21 = entity2[`start_${ax1}`];
-		const y21 = entity2[`start_${ax2}`];
-		const x22 = entity2[`end_${ax1}`];
-		const y22 = entity2[`end_${ax2}`];
+	if ((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (entity1.specific_type == 'AcDbRotatedDimension' || entity1.specific_type == 'AcDbAlignedDimension'))) && 
+		(etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension')))) {
+		let x11, y11, x12, y12, x21, y21, x22, y22;
+		if (etype1 == "AcDbLine") {
+			x11 = entity1[`start_${ax1}`];
+			y11 = entity1[`start_${ax2}`];
+			x12 = entity1[`end_${ax1}`];
+			y12 = entity1[`end_${ax2}`];
+		} else {
+			x11 = entity1[`${ax1}`];
+			y11 = entity1[`${ax2}`];
+			x12 = entity1[`${ax1}_end`];
+			y12 = entity1[`${ax2}_end`];
+		}
+		
+		if (etype2 == "AcDbLine") {
+			x21 = entity2[`start_${ax1}`];
+			y21 = entity2[`start_${ax2}`];
+			x22 = entity2[`end_${ax1}`];
+			y22 = entity2[`end_${ax2}`];
+		} else {
+			x21 = entity2[`${ax1}`];
+			y21 = entity2[`${ax2}`];
+			x22 = entity2[`${ax1}_end`];
+			y22 = entity2[`${ax2}_end`];
+		}
+				
 		const det = (x12 - x11)*(y22 - y21) - (x22 - x21)*(y12 - y11);	
 		const det1 = (x22 - x11)*(y22 - y21) - (x22 - x21)*(y22 - y11);
 		const det2 = (x12 - x11)*(y12 - y21) - (x12 - x21)*(y12 - y11);
@@ -37,16 +55,26 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		}
 		
 		return [];
-	} else if ((etype1 == "AcDbLine" && etype2 == "AcDbPolyline") || (etype2 == "AcDbLine"  && etype1 == "AcDbPolyline")) {
+	} else if (((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (entity1.specific_type == 'AcDbRotatedDimension' || entity1.specific_type == 'AcDbAlignedDimension'))) 
+		&& etype2 == "AcDbPolyline") || ((etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension')))  && etype1 == "AcDbPolyline")) {
 		if (etype1 == "AcDbPolyline") {
 			const temp = entity1;
 			entity1 = entity2;
 			entity2 = temp;
 		}
-		const x11 = entity1[`start_${ax1}`];
-		const y11 = entity1[`start_${ax2}`];
-		const x12 = entity1[`end_${ax1}`];
-		const y12 = entity1[`end_${ax2}`];
+		let x11, y11, x12, y12;
+		if (entity1.subclass == "AcDbLine") {
+			x11 = entity1[`start_${ax1}`];
+			y11 = entity1[`start_${ax2}`];
+			x12 = entity1[`end_${ax1}`];
+			y12 = entity1[`end_${ax2}`];
+		} else {
+			x11 = entity1[`${ax1}`];
+			y11 = entity1[`${ax2}`];
+			x12 = entity1[`${ax1}_end`];
+			y12 = entity1[`${ax2}_end`];
+		}
+		
 		const m1 = (y12 - y11)/(x12 - x11);
 		const vertices = JSON.parse(JSON.stringify(entity2.vertices));
 		
@@ -141,8 +169,11 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		}
 		
 		return points;			
-	} else if ((etype1 == "AcDbLine" && etype2 == "AcDbCircle" && entity2.etype != "ARC") || 
-		(etype2 == "AcDbLine" && etype1 == "AcDbCircle"  && entity1.etype != "ARC")) {
+	} else if (((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (entity1.specific_type == 'AcDbRotatedDimension' || entity1.specific_type == 'AcDbAlignedDimension'))) && 
+		etype2 == "AcDbCircle" && entity2.etype != "ARC") || 
+		((etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension'))) && 
+		etype1 == "AcDbCircle"  && entity1.etype != "ARC")) {
+		
 		if (etype1 == "AcDbCircle") {
 			const temp = entity1;
 			entity1 = entity2;
@@ -151,13 +182,22 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		const x0 = entity2[`${ax1}`];
 		const y0 = entity2[`${ax2}`];
 		const radius = entity2.radius;
-		const x1 = entity1[`start_${ax1}`];
-		const y1 = entity1[`start_${ax2}`];
-		const x2 = entity1[`end_${ax1}`];
-		const y2 = entity1[`end_${ax2}`];
+		let x1, y1, x2, y2;
+		if (entity1.subclass == "AcDbLine") {
+			x1 = entity1[`start_${ax1}`];
+			y1 = entity1[`start_${ax2}`];
+			x2 = entity1[`end_${ax1}`];
+			y2 = entity1[`end_${ax2}`];
+		} else {
+			x1 = entity1[`${ax1}`];
+			y1 = entity1[`${ax2}`];
+			x2 = entity1[`${ax1}_end`];
+			y2 = entity1[`${ax2}_end`];
+		}
+		
 		const m = (y2 - y1)/(x2 - x1);
 		
-		if (Math.abs(m) == Infinity) {
+		if (Math.abs(m) > 1000000000) {
 			const det = radius*radius - (x1 - x0)*(x1 - x0);
 			
 			if (det < 0) {
@@ -234,7 +274,10 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 			
 		}
 		return points;
-	} else if ((etype1 == "AcDbLine" && etype2 == "AcDbCircle") || (etype2 == "AcDbLine" && etype1 == "AcDbCircle")) {
+	} else if (((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (entity1.specific_type == 'AcDbRotatedDimension' || entity1.specific_type == 'AcDbAlignedDimension'))) && 
+		etype2 == "AcDbCircle") || 
+		((etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension'))) && etype1 == "AcDbCircle")) {
+		
 		if (etype1 == "AcDbCircle") {
 			const temp = entity1;
 			entity1 = entity2;
@@ -243,15 +286,25 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		const xc = entity2[`${ax1}`];
 		const yc = entity2[`${ax2}`];
 		const radius = entity2.radius;
-		const x1 = entity1[`start_${ax1}`];
-		const y1 = entity1[`start_${ax2}`];
-		const x2 = entity1[`end_${ax1}`];
-		const y2 = entity1[`end_${ax2}`];
+		let x1, y1, x2, y2;
+		if (entity1.subclass == "AcDbLine") {
+			x1 = entity1[`start_${ax1}`];
+			y1 = entity1[`start_${ax2}`];
+			x2 = entity1[`end_${ax1}`];
+			y2 = entity1[`end_${ax2}`];
+		} else {
+			x1 = entity1[`${ax1}`];
+			y1 = entity1[`${ax2}`];
+			x2 = entity1[`${ax1}_end`];
+			y2 = entity1[`${ax2}_end`];
+		}	
+		
 		let m = (y2 - y1)/(x2 - x1);
+		
 		let sol1, sol2, ysol1, ysol2;
 		let points = [];
 		let p1_tangent = false;
-		if (Math.abs(m) == Infinity) {
+		if (Math.abs(m) > 1000000000) {
 			const det = radius*radius - (x1 - xc)*(x1 - xc);
 			
 			if (det < 0) {
@@ -326,7 +379,8 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		}
 		
 		return points;	
-	} else if ((etype1 == "AcDbLine" && etype2 == "AcDbEllipse") || (etype2 == "AcDbLine" &&	etype1 == "AcDbEllipse")) {
+	} else if (((etype1 == "AcDbLine" || (etype1 == "AcDbDimension" && (entity1.specific_type == 'AcDbRotatedDimension' || entity1.specific_type == 'AcDbAlignedDimension'))) && 
+	etype2 == "AcDbEllipse") || ((etype2 == "AcDbLine" || (etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension'))) && etype1 == "AcDbEllipse")) {
 		if (etype1 == "AcDbEllipse") {
 			const temp = entity1;
 			entity1 = entity2;
@@ -336,10 +390,18 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		const xc = entity2[`${ax1}`];
 		const yc = entity2[`${ax2}`];
 		const radius = entity2.radius;
-		const x1 = entity1[`start_${ax1}`];
-		const y1 = entity1[`start_${ax2}`];
-		const x2 = entity1[`end_${ax1}`];
-		const y2 = entity1[`end_${ax2}`];
+		let x1, y1, x2, y2;
+		if (entity1.subclass == "AcDbLine") {
+			x1 = entity1[`start_${ax1}`];
+			y1 = entity1[`start_${ax2}`];
+			x2 = entity1[`end_${ax1}`];
+			y2 = entity1[`end_${ax2}`];
+		} else {
+			x1 = entity1[`${ax1}`];
+			y1 = entity1[`${ax2}`];
+			x2 = entity1[`${ax1}_end`];
+			y2 = entity1[`${ax2}_end`];
+		}	
 		let m = (y2 - y1)/(x2 - x1);
 		let sol1, sol2, ysol1, ysol2;
 		let points = [];
@@ -359,8 +421,10 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 		let sa = entity2.start_angle;
 		let ea = entity2.end_angle;	
 		let p_tangent = false;
-		if (Math.abs(m) == Infinity) {
-			const det = (B*x1 + E)*(B*x1 + E) - 4*C*(A*x1*x1 + D*x1 + F);				
+		
+		if (Math.abs(m) > 1000000000) {
+			const det = (B*x1 + E)*(B*x1 + E) - 4*C*(A*x1*x1 + D*x1 + F);	
+			
 			if (det < 0) {
 				return [];
 			} else if (Math.abs(det) < 0.0000001) {				
@@ -377,7 +441,7 @@ const intersection = (entity1, entity2, plane, getAxes, tolerance) => {
 				if ((ysol2 - y1)*(ysol2 - y2) < tolerance) {						
 					sol2 = x1;
 				}
-			}
+			}			
 		} else {
 			const y_int = -m*x1 + y1;
 			const AA = (A + B*m + C*m*m);

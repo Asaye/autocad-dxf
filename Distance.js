@@ -46,8 +46,10 @@ module.exports = (entity, entity2, plane, getAxes, tolerance) => {
 		entity2 = temp;
 	}
 	
-	if (etype == "AcDbLine" || etype2 == "AcDbLine") {
-		if (etype == "AcDbLine") {
+	if (etype == "AcDbLine" || etype2 == "AcDbLine" || 
+	(etype == "AcDbDimension" && (entity.specific_type == 'AcDbRotatedDimension' || entity.specific_type == 'AcDbAlignedDimension')) ||
+	(etype2 == "AcDbDimension" && (entity2.specific_type == 'AcDbRotatedDimension' || entity2.specific_type == 'AcDbAlignedDimension'))) {
+		if (etype == "AcDbLine" || etype == "AcDbDimension") {
 			const temp = entity;
 			entity = entity2;
 			entity2 = temp;
@@ -56,10 +58,19 @@ module.exports = (entity, entity2, plane, getAxes, tolerance) => {
 			etype = etype.toLowerCase().replace("acdb", "");
 		}
 		
-		const x1 = entity2[`start_${ax1}`];
-		const y1 = entity2[`start_${ax2}`];
-		const x2 = entity2[`end_${ax1}`];
-		const y2 = entity2[`end_${ax2}`];
+		let x1, y1, x2, y2;
+		if (entity2.subclass == "AcDbLine") {
+			x1 = entity2[`start_${ax1}`];
+			y1 = entity2[`start_${ax2}`];
+			x2 = entity2[`end_${ax1}`];
+			y2 = entity2[`end_${ax2}`];
+		} else {
+			x1 = entity2[`${ax1}`];
+			y1 = entity2[`${ax2}`];
+			x2 = entity2[`${ax1}_end`];
+			y2 = entity2[`${ax2}_end`];
+		}
+		
 		const slope = (y2 - y1)/(x2 - x1);
 		
 		if (etype == "point" || etype == "circle" || etype == "ellipse" || etype == "text" || etype == "mtext" || etype == "vertex") {			
@@ -72,11 +83,20 @@ module.exports = (entity, entity2, plane, getAxes, tolerance) => {
 				const D = Math.sqrt(A*A + 1);
 				return Math.abs(A*entity[ax1] + B*entity[ax2] + C)/D;
 			}				
-		} else if (etype == "line") { 
-			const x21 = entity[`start_${ax1}`];
-			const y21 = entity[`start_${ax2}`];
-			const x22 = entity[`end_${ax1}`];
-			const y22 = entity[`end_${ax2}`];
+		} else if (etype == "line" || etype == "dimension") { 
+			let x21, y21, x22, y22;
+			if (entity.subclass == "AcDbLine") {
+				x21 = entity[`start_${ax1}`];
+				y21 = entity[`start_${ax2}`];
+				x22 = entity[`end_${ax1}`];
+				y22 = entity[`end_${ax2}`];
+			} else {
+				x21 = entity[`${ax1}`];
+				y21 = entity[`${ax2}`];
+				x22 = entity[`${ax1}_end`];
+				y22 = entity[`${ax2}_end`];
+			}
+			
 			const slope2 = -(y22 - y21)/(x22 - x21);
 			
 			if (Math.abs(slope) == Infinity && Math.abs(slope2) >= 1/tolerance || 
