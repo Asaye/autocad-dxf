@@ -1,6 +1,7 @@
 {
 	"AcDbArc": {
 		"0": "etype",          // type of entity, ARC
+		"5": "id",             // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",      // line type name
 		"8": "layer",          // the layer on which the point is defined
 		"10": "x",             // the x coordinate of the center
@@ -12,11 +13,14 @@
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"      // subclass marker, AcDbCircle
+		"100": "subclass",     // subclass marker, AcDbCircle
+		"330": "ref_id",       // the id(s) of entities referring to the current entity
+		"331": "ref_id"        // the id(s) of entities referring to the current entity
 	},
 	"AcDbBlockReference": {
 		"0": "etype",          // type of entity, INSERT
 		"2": "block_name",     // block name
+		"5": "id",             // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",      // line type name
 		"8": "layer",          // the layer on which the point is defined
 		"41": "scale_x",       // scale in x direction
@@ -29,10 +33,13 @@
 		"60": "visibility",    // object visibility
 		"70": "column_count",  // column count
 		"71": "row_count",     // row count
-		"100": "subclass"      // subclass marker, AcDbBlockReference
+		"100": "subclass",     // subclass marker, AcDbBlockReference
+		"330": "ref_id",       // the id(s) of entities referring to the current entity
+		"331": "ref_id"        // the id(s) of entities referring to the current entity
 	},	
 	"AcDbCircle": {
 		"0": "etype",          // type of entity, CIRCLE
+		"5": "id",             // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",      // line type name
 		"8": "layer",          // the layer on which the point is defined
 		"10": "x",             // x coordinate of the center
@@ -43,6 +50,8 @@
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
 		"100": "subclass/specific_type",      // subclass marker (AcDbCircle)/the specific type of the circle (AcDbArc)	
+		"330": "ref_id",       // the id(s) of entities referring to the current entity
+		"331": "ref_id",       // the id(s) of entities referring to the current entity
 		"**": "area",          // area of a circle or the visible segment of a circular arc
 		"***": "area_sector",  // area of a sector for arcs
 		"****": "circumference/arc_length"     // circumeference of arc length
@@ -51,6 +60,7 @@
 		"0": "etype",                        // type of entity, DIMENSION		
 		"1": "text_override",                // user defined value for the dimension
 		"3": "dimension_style",              // the name of the dimension style
+		"5": "id",                           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                    // line type name
 		"8": "layer",                        // the layer on which the point is defined		
 		"10": "x",                           // the x coordinate of the dimension line
@@ -79,10 +89,13 @@
 		"62": "color",                       // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                        // type of the dimension line
 		"71": "attachement_point",           // attachment point
-		"100": "subclass/specific_type"      // subclass marker (AcDbDimension)/the specific type of the dimension (AcDbAlignedDimension/AcDb3PointAngularDimension/AcDbDiametricDimension/AcDbRadialDimension)		
+		"100": "subclass/specific_type",     // subclass marker (AcDbDimension)/the specific type of the dimension (AcDbAlignedDimension/AcDb3PointAngularDimension/AcDbDiametricDimension/AcDbRadialDimension)		
+	    "330": "ref_id",                     // the id(s) of entities referring to the current entity
+		"331": "ref_id"                      // the id(s) of entities referring to the current entity
 	},	
 	"AcDbEllipse": {
 		"0": "etype",          // type of entity, ELLIPSE
+		"5": "id",             // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",      // line type name
 		"8": "layer",          // the layer on which the point is defined
 		"10": "x",             // the x coordinate of the center
@@ -102,14 +115,18 @@
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
 		"100": "subclass",     // subclass marker, AcDbEllipse
+		"330": "ref_id",       // the id(s) of entities referring to the current entity
+		"331": "ref_id",       // the id(s) of entities referring to the current entity
 		"**": "area",          // area of a circle or the visible segment of an elliptical arc
 		"***": "area_sector",  // area of a sector for arcs
 		"****": "area_full"    // the full area of the ellipse in case the ellipse is an arc
+		
 	},
 	"AcDbExtrudedSurface": {
 		"0": "etype",                        // type of entity, SURFACE
 		"1": "proprietary_data",             // proprietary data upto 255 characters (exclusive)
 		"3": "proprietary_data",             // proprietary data beyond 255 characters
+		"5": "id",                           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                    // line type name
 		"8": "layer",                        // the layer on which the point is defined
 		"10": "x",                           // the x coordinate of the sweep vector
@@ -129,10 +146,13 @@
 		"49": "align_angle",                 // Align angle (in radians)
 		"70": "sweep_alignment_option",      // Sweep alignment option
 		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbExtrudedSurface
-		"310": "binary_data"                 // binary data
+		"310": "binary_data",                // binary data
+		"330": "ref_id",                     // the id(s) of entities referring to the current entity
+		"331": "ref_id"                      // the id(s) of entities referring to the current entity
 	},
 	"AcDbFace": {
 		"0": "etype",        // type of entity, 3DFACE
+		"5": "id",           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",    // line type name
 		"8": "layer",        // the layer on which the point is defined
 		"10": "corners.x",   // the x coordinate of the first corner
@@ -149,11 +169,14 @@
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "invisible_edge",       // invisible edge flag, First/Second/Third/Fourth
-		"100": "subclass"    // subclass marker, AcDbFace
+		"100": "subclass",    // subclass marker, AcDbFace
+		"330": "ref_id",      // the id(s) of entities referring to the current entity
+		"331": "ref_id"       // the id(s) of entities referring to the current entity
 	},
 	"AcDbFcf": {
 		"0": "etype",                     // type of entity, TOLERANCE
 		"1": "visual_representation",     // String representing the visual representation of the tolerance
+		"5": "id",                        // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                 // line type name
 		"3": "dimension_style",           // dimension style name
 		"8": "layer",                     // the layer on which the point is defined
@@ -169,33 +192,73 @@
 		"100": "subclass",                // subclass marker, AcDbFcf
 		"210": "extrusion_direction.x",   // the x coordinate of the Extrusion direction	
 		"220": "extrusion_direction.y",   // the y coordinate of the Extrusion direction
-		"230": "extrusion_direction.z"    // the z coordinate of the Extrusion direction		
+		"230": "extrusion_direction.z",   // the z coordinate of the Extrusion direction		
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbHatch": {
 		"0": "etype",                      // type of entity, HATCH
-		"2": "style_name",	               // style name
+		"2": "style_name",	               // atch pattern name
+		"5": "id",                         // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                  // line type name		
 		"8": "layer",                      // the layer on which the point is defined
-		"10": "seed_points.x",             // the x coordinate of a seed point
-		"20": "seed_points.y",             // the y coordinate of a seed point
-		"30": "seed_points.z",             // the z coordinate of a seed point
-		"41": "pattern_scale",             // pattern scale
-		"48": "line_scale",                // line type scale
-		"52": "pattern_angle",             // angle of rotation of the pattern
+		"10": "elevation_point.x/seed_points.x/boundary_paths.vertices.x/boundary_paths.start_x/boundary_paths.center_x/boundary_paths.control_points.x",             // x coordinate values
+		"20": "elevation_point.y/seed_points.y/boundary_paths.vertices.y/boundary_paths.start_y/boundary_paths.center_y/boundary_paths.control_points.x",             // y coordinate values
+		"11": "boundary_paths.end_x/boundary_paths.major_end_dx",             // the x coordinate of the end point (if edge_type is Line), the x axis value difference between the center and the end of the major axis (if edge_type is Elliptic arc)
+		"21": "boundary_paths.end_y/boundary_paths.major_end_dy",             // the y coordinate of the end point (if edge_type is Line), the y axis value difference between the center and the end of the major axis (if edge_type is Elliptic arc)	
+		"30": "elevation_point.z/seed_points.z",               // the z coordinate of an elevation point or a seed point
+		"40": "boundary_paths.radius/boundary_paths.minorToMajor/boundary_paths.knot_values",             // the radius of the circular arc (if edge_type is Circular arc) or the ratio between the lengths of the minor and major axes (if edge_type is Elliptic arc) or knot values (if edge_type is Spline)
+		"41": "pattern_scale",              // Hatch pattern scale or spacing (pattern fill only)
+		"42": "boundary_paths.vertices.bulge/boundary_paths.weights",  // Bulge (optional, default = 0) (if boundary is a polyline) OR Weights (optional, default = 1) (if edge_type is Spline)	
+		"43": "pattern_lines.base_point.x", // Pattern line base point, X component
+		"44": "pattern_lines.base_point.y", // Pattern line base point, Y component
+		"45": "pattern_lines.offset.x",     // Pattern line offset, X component
+		"46": "pattern_lines.offset.y",     // Pattern line offset, Y component
+		"48": "line_scale",                 // line type scale
+		"49": "pattern_lines.dash_lengths",                      // Dash length (multiple entries)
+		"50": "boundary_paths.start_angle",                      // the start angle (only if edge_type is Circular arc or Elliptic arc)
+		"51": "boundary_paths.end_angle",                        // the end angle (only if edge_type is Circular arc or Elliptic arc)
+		"52": "pattern_angle",             // Hatch pattern angle (pattern fill only)
+		"53": "pattern_lines.angle",       // Pattern line angle
 		"60": "visibility",                // object visibility
 		"62": "color",                     // color number, 0 = ByBlock, 256 = ByLayer
+		"63": "gradient_colors.color_code",                        // autocad color code for the gradient colors
 		"70": "fill_type",                 // fill type, Pattern/Solid
 		"71": "associative",               // associativity flag
-		"75": "style",                     // the hatch style
+		"72": "boundary_paths.edge_type/boundary_paths.has_bulge",  // Edge type (only if boundary is not a polyline),Line/Circular arc/Elliptic arc/Spline  OR Has bulge flag	if boundary is a polyline, Yes/No	
+		"73": "boundary_paths.is_closed/boundary_paths.is_counterclockwise/boundary_paths.rational",  // is closed flag (only if boundary is a polyline) OR is counter clockwise flag if edge_type is Circular arc/Elliptic arc  OR rational flag if edge_type is Spline, Yes/No	
+		"74": "boundary_paths.periodic",   // is periodic flag (only if edge_type is Elliptic arc), Yes/No	
+		"75": "style",                     // the hatch style, Hatch odd parity area/Hatch outermost area only/Hatch through entire area
 		"76": "pattern",                   // the type of hatch pattern, User-defined/Predefined/Custom
-		"78": "number_of_lines",           // total number of lines
-		"91": "number_of_boundary_paths",  // number of boundary paths
+		"77": "double_pattern",            // Hatch pattern double flag (pattern fill only), Yes/No
+		"78": "number_of_pattern_lines",   // Number of pattern definition lines, number_of_lines had been used for versions earlier than 1.5
+		"79": "pattern_lines.number_of_dash_length_items",             // Number of dash length items
+		"91": "number_of_boundary_paths",  // Number of boundary paths (loops)
+		"92": "boundary_paths.path_type",  // Boundary path type, Default,External,Polyline,Derived,Textbox,Outermost
+		"93": "boundary_paths.number_of_vertices/boundary_paths.number_of_edges",  // Number of edges in this boundary path (or number of verices if boundary is a polyline)
+		"94": "boundary_paths.degree",     // The degree of the spline (if edge_type is Spline)
+		"95": "boundary_paths.number_of_knots",           // Number of knots (only if edge_type is Elliptic arc), Yes/No	
+		"96": "boundary_paths.number_of_control_points",  // Number of control points (only if edge_type is Elliptic arc), Yes/No	
+		"97": "boundary_paths.number_of_source_boundaries/boundary_paths.number_of_fit_data",  // Number of source boundary objects OR Number of fit data (if edge_type is Spline)
 		"98": "number_of_seed_points",     // number of seed points
 		"100": "subclass",                 // subclass marker, AcDbHatch
-		"450": "gradient"                  // true if the hatch is of gradient color or false otherwise
+		"210": "extrusion_direction.x",    // the x coordinate of the extrusion direction
+		"220": "extrusion_direction.y",    // the y coordinate of the extrusion direction
+		"230": "extrusion_direction.z",    // the z coordinate of the extrusion direction
+		"330": "ref_id",                   // the id(s) of entities referring to the current entity
+		"331": "ref_id",                   // the id(s) of entities referring to the current entity
+		"421": "gradient_colors.rgb",      // RGB values for the gradient colors
+		"450": "gradient",                 // true if the hatch is of gradient color or false otherwise
+		"452": "gradient_composition",     // Gradient color composition, Two-color gradient/Single-color gradient
+		"453": "gradient_style",           // Color styles of gradient, Solid hatch/Gradient
+		"460": "gradient_rotation",        // Rotation angle in radians for gradients (default = 0, 0)
+		"461": "gradient_definition",      // Gradient definition; corresponds to the Centered option on the Gradient Tab of the Boundary Hatch and Fill dialog box,Unshifted/Shifted 
+		"462": "gradient_color_tint",      // Color tint value used by dialog code (default = 0, 0; range is 0.0 to 1.0).
+		"470": "gradient_type"             // Gradient type, LINEAR/RADIAL/ANGULAR/REFLECTED/DIAMOND/CONICAL/SPHERICAL/HEMISPHERICAL/CURVED
 	},
 	"AcDbHelix": {
 		"0": "etype",                      // type of entity, HELIX		
+		"5": "id",                         // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"8": "layer",                      // the layer on which the point is defined
 		"10": "axis_base_point.x",         // the x coordinate of the axis base point
 		"20": "axis_base_point.y",         // the y coordinate of the axis base point
@@ -211,11 +274,14 @@
 		"42": "turn_height",               // the number of turns
 		"48": "line_scale",                // line type scale
 		"60": "visibility",                // object visibility
-		"100": "subclass"                  // subclass marker, AcDbHelix
+		"100": "subclass",                 // subclass marker, AcDbHelix
+		"330": "ref_id",                   // the id(s) of entities referring to the current entity
+		"331": "ref_id"                    // the id(s) of entities referring to the current entity
 	},	
 	"AcDbLeader": {
 		"0": "etype",                               // type of entity, LEADER
 		"3": "dimension_style",                     // dimension style
+		"5": "id",                                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                           // line type name
 		"8": "layer",                               // the layer on which the point is defined
 		"10": "vertices.x",                         // the x coordinate of a vertex
@@ -244,10 +310,13 @@
 		"230": "normal_vector.z",                   // the z value of the normal vector
 		"231": "horizontal_direction.z",            // the z value of the “Horizontal” direction for leader
 		"232": "offset_from_insertion_point.z",     // the z value of the Offset of last leader vertex from block reference insertion point
-		"233": "offset_from_annotation.z"           // the z value of the Offset of last leader vertex from annotation placement point
+		"233": "offset_from_annotation.z",          // the z value of the Offset of last leader vertex from annotation placement point
+		"330": "ref_id",                            // the id(s) of entities referring to the current entity
+		"331": "ref_id"                             // the id(s) of entities referring to the current entity
 	},
 	"AcDbLine": {
 		"0": "etype",        // type of entity, LINE
+		"5": "id",           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",    // line type name
 		"8": "layer",        // the layer on which the point is defined
 		"10": "start_x",     // the x coordinate of the starting point
@@ -259,13 +328,16 @@
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass",   // subclass marker. AcDbLine in this case
+		"100": "subclass",   // subclass marker. AcDbLine in this case		
+		"330": "ref_id",     // the id(s) of entities referring to the current entity
+		"331": "ref_id",     // the id(s) of entities referring to the current entity
 		"**": "length"       // length of the line
 	},
 	"AcDbLoftedSurface": {
 		"0": "etype",                    // type of entity, SURFACE
 		"1": "proprietary_data",         // proprietary data upto 255 characters (exclusive)
 		"3": "proprietary_data",         // proprietary data beyond 255 characters
+		"5": "id",                       // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                // line type name
 		"8": "layer",                    // the layer on which the point is defined		
 		"40": "transform_matrix",        // Revolve angle (in radians)
@@ -274,23 +346,29 @@
 		"43": "start_draft_magnitude",   // Start draft magnitude
 		"44": "end_draft_magnitude",     // End draft magnitude		
 		"48": "scale_factor",            // Scale factor
-		"100": "subclass/specific_type"  // subclass marker, AcDbModelerGeometry/AcDbLoftedSurface
+		"100": "subclass/specific_type", // subclass marker, AcDbModelerGeometry/AcDbLoftedSurface
+		"330": "ref_id",                 // the id(s) of entities referring to the current entity
+		"331": "ref_id"                  // the id(s) of entities referring to the current entity
 	},	
 	"AcDbModelerGeometry": {
 		"0": "etype",               // type of entity, 3DSOLID
 		"1": "proprietary_data",    // proprietary data upto 255 characters (exclusive)
 		"3": "proprietary_data",    // proprietary data beyond 255 characters
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",           // line type name
 		"7": "style",               // text style name
 		"8": "layer",               // the layer on which the point is defined
 		"48": "line_scale",         // line type scale
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"           // subclass marker, AcDbMText
+		"100": "subclass",          // subclass marker, AcDbMText
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},
 	"AcDbMText": {
 		"0": "etype",               // type of entity, MTEXT
 		"1": "text",                // text value
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",           // line type name
 		"7": "style",               // text style name
 		"8": "layer",               // the layer on which the point is defined
@@ -303,11 +381,14 @@
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
 		"72": "drawing_direction",  // the drawing direction of the text
-		"100": "subclass"           // subclass marker, AcDbMText
+		"100": "subclass",          // subclass marker, AcDbMText
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},
 	"AcDbMline": {
 		"0": "etype",                            // type of entity, MLINE
 		"2": "style_name",                       // the name of the style used
+		"5": "id",                               // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                        // line type name
 		"8": "layer",                            // the layer on which the point is defined
 		"10": "start_x",                         // the x coordinate of the starting point
@@ -331,10 +412,13 @@
 		"72": "number_of_vertices",              // number of vertices
 		"74": "vertices.number_of_parameters",   // Number of parameters for this element 
 		"75": "vertices.number_of_area_fill_parameters",              // Number of area fill parameters for this element 
-		"100": "subclass"                        // subclass marker, AcDbMline		
+		"100": "subclass",                       // subclass marker, AcDbMline		
+		"330": "ref_id",                         // the id(s) of entities referring to the current entity
+		"331": "ref_id"                          // the id(s) of entities referring to the current entity
 	},	
 	"AcDbPoint": {
 		"0": "etype",        // type of entity, POINT
+		"5": "id",           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",    // line type name
 		"8": "layer",        // the layer on which the point is defined
 		"10": "x",           // the x coordinate of the point
@@ -343,10 +427,13 @@
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass"    // subclass marker. AcDbPoint in this case
+		"100": "subclass",   // subclass marker. AcDbPoint in this case
+		"330": "ref_id",     // the id(s) of entities referring to the current entity
+		"331": "ref_id"      // the id(s) of entities referring to the current entity
 	},	
 	"AcDbPolyline": {
 		"0": "etype",                     // type of entity, LWPOLYLINE
+		"5": "id",                        // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                 // line type name		
 		"8": "layer",                     // the layer on which the point is defined
 		"10": "vertices.x",               // the x coordinate of a vertex
@@ -360,10 +447,13 @@
 		"62": "color",                    // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                     // type of the polyline, 'Closed' or 'Plinegen'
 		"90": "number_of_vertices",       // number of vertices		
-		"100": "subclass"                 // subclass marker, AcDbPolyline
+		"100": "subclass",                // subclass marker, AcDbPolyline
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDb3dPolyline": {
 		"0": "etype",                     // type of entity, POLYLINE
+		"5": "id",                        // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                 // line type name		
 		"8": "layer",                     // the layer on which the point is defined
 		"10": "vertices.x",               // the x coordinate of a vertex
@@ -377,10 +467,13 @@
 		"62": "color",                    // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                     // type of the polyline, 'Closed' or 'Plinegen'
 		"90": "number_of_vertices",       // number of vertices		
-		"100": "subclass"                 // subclass marker, AcDb3dPolyline
+		"100": "subclass",                // subclass marker, AcDb3dPolyline
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbRasterImage": {
 		"0": "etype",                     // type of entity, IMAGE
+		"5": "id",                        // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                 // line type name
 		"8": "layer",                     // the layer on which the point is defined
 		"10": "insertion_point.x",        // the x coordinate of the insertion point
@@ -402,10 +495,13 @@
 		"70": "image_display_properties", // image display properties
 		"71": "clip_boundary_type",       // type of clip boundary, Rectangular/Polygonal		
 		"100": "subclass",                // subclass marker, AcDbRasterImage
-		"290": "clip_mode"                // clip mode flag, Outside/Inside
+		"290": "clip_mode",               // clip mode flag, Outside/Inside
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbRay": {
 		"0": "etype",               // type of entity, RAY
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",           // line type name
 		"8": "layer",               // the layer on which the point is defined
 		"10": "start_x",            // the x coordinate of the starting point
@@ -417,10 +513,13 @@
 		"48": "line_scale",         // line type scale
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass"           // subclass marker, AcDbRay
+		"100": "subclass",          // subclass marker, AcDbRay
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},
 	"AcDbRevolvedSurface": {
 		"0": "etype",               // type of entity, SURFACE
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"1": "proprietary_data",    // proprietary data upto 255 characters (exclusive)
 		"3": "proprietary_data",    // proprietary data beyond 255 characters
 		"6": "line_type",           // line type name
@@ -441,10 +540,13 @@
 		"71": "n_u_isolines",       // Number of U isolines
 		"72": "n_v_isolines",       // Number of V isolines
 		"100": "subclass/specific_type",  // subclass marker, AcDbModelerGeometry/AcDbRevolvedSurface
-		"310": "binary_data"        // binary data
+		"310": "binary_data",       // binary data
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},
 	"AcDbShape": {
 		"0": "etype",               // type of entity, SHAPE
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"2": "style_name",	        // style name
 		"6": "line_type",           // line type name		
 		"8": "layer",               // the layer on which the point is defined
@@ -456,10 +558,13 @@
 		"50": "rotation",           // rotation angle
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"           // subclass marker, AcDbShape
+		"100": "subclass",          // subclass marker, AcDbShape
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},
 	"AcDbSpline": {
 		"0": "etype",                      // type of entity, SPLINE
+		"5": "id",                         // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                  // line type name
 		"8": "layer",                      // the layer on which the point is defined
 		"10": "control_points.x",          // the x coordinate of a control point
@@ -484,12 +589,15 @@
 		"72": "number_of_knots",           // number of knots
 		"73": "number_of_control_points",  // number of control points
 		"74": "number_of_fit_points",      // number of fit points
-		"100": "subclass"                  // subclass marker, AcDbSpline
+		"100": "subclass",                 // subclass marker, AcDbSpline
+		"330": "ref_id",                   // the id(s) of entities referring to the current entity
+		"331": "ref_id"                    // the id(s) of entities referring to the current entity
 	},
 	"AcDbSweptSurface": {
 		"0": "etype",                        // type of entity, SURFACE
 		"1": "proprietary_data",             // proprietary data upto 255 characters (exclusive)
 		"3": "proprietary_data",             // proprietary data beyond 255 characters
+		"5": "id",                           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                    // line type name
 		"8": "layer",                        // the layer on which the point is defined
 		"10": "x",                           // the x coordinate of the sweep vector
@@ -510,11 +618,14 @@
 		"49": "align_angle",                 // Align angle (in radians)
 		"70": "sweep_alignment_option",      // Sweep alignment option
 		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbSweptSurface
-		"310": "binary_data"                 // binary data
+		"310": "binary_data",                // binary data
+		"330": "ref_id",                     // the id(s) of entities referring to the current entity
+		"331": "ref_id"                      // the id(s) of entities referring to the current entity
 	},
 	"AcDbTable": {
 		"0": "etype",                               // type of entity, ACAD_TABLE
 		"1": "cell_text",                           // text string
+		"5": "id",                                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",                           // line type name
 		"7": "style",                               // text style name		
 		"8": "layer",                               // the layer on which the point is defined	
@@ -548,11 +659,14 @@
 		"279": "line_weight_top",                   // Lineweight for the top border of the cell, one for each cell
 		"283": "fill_color_on",                     // Boolean flag for whether the fill color is on, one for each cell
 		"289": "top_border_visible",                // Boolean flag for the visibility of the top border of the cell, one for each cell
-		"310": "proxy_graphics_data"               // Data for proxy entity graphics 
+		"310": "proxy_graphics_data",               // Data for proxy entity graphics 
+		"330": "ref_id",                            // the id(s) of entities referring to the current entity
+		"331": "ref_id"                             // the id(s) of entities referring to the current entity
 	},	
 	"AcDbText": {
 		"0": "etype",               // type of entity, TEXT/ATTRIB/ATTDEF
 		"1": "text",                // text string
+		"5": "id",                  // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",           // line type name
 		"7": "style",               // text style name		
 		"8": "layer",               // the layer on which the point is defined	
@@ -566,10 +680,13 @@
 		"50": "rotation",           // rotation angle 
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"           // subclass marker, AcDbText
+		"100": "subclass",          // subclass marker, AcDbText
+		"330": "ref_id",            // the id(s) of entities referring to the current entity
+		"331": "ref_id"             // the id(s) of entities referring to the current entity
 	},	
 	"AcDbTrace": {
 		"0": "etype",        // type of entity, TRACE
+		"5": "id",           // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",    // line type name
 		"8": "layer",        // the layer on which the point is defined
 		"10": "corners.x",   // the x coordinate of the first corner
@@ -585,10 +702,13 @@
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"    // subclass marker, AcDbTrace
+		"100": "subclass",   // subclass marker, AcDbTrace
+		"330": "ref_id",     // the id(s) of entities referring to the current entity
+		"331": "ref_id"      // the id(s) of entities referring to the current entity
 	},
 	"AcDbVertex": {
 		"0": "etype",         // type of entity, VERTEX
+		"5": "id",            // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type",     // line type name
 		"8": "layer",         // the layer on which the point is defined
 		"10": "x",            // the x coordinate of the location corner
@@ -601,10 +721,13 @@
 		"60": "visibility",   // object visibility
 		"62": "color",        // color number, 0 = ByBlock, 256 = ByLayer				
 		"70": "type",         // type of the vertex
-		"100": "subclass"     // subclass marker, AcDbVertex
+		"100": "subclass",     // subclass marker, AcDbVertex
+		"330": "ref_id",       // the id(s) of entities referring to the current entity
+		"331": "ref_id"        // the id(s) of entities referring to the current entity
 	},
 	"AcDbXline": {
 		"0": "etype",        		      // type of entity, XLINE
+		"5": "id",                        // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
 		"6": "line_type", 			      // line type name
 		"8": "layer",      				  // the layer on which the point is defined
 		"10": "first_point.x",            // the x value of the first point
@@ -616,7 +739,9 @@
 		"48": "line_scale",               // line type scale		
 		"60": "visibility",               // object visibility
 		"62": "color",                    // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass"                 // subclass marker, AcDbXline
+		"100": "subclass",                // subclass marker, AcDbXline
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	
 	"APPID": {
@@ -758,7 +883,8 @@
 		"146": "elevation"              // Elevation
 	},
 	"BLOCK_RECORD": {
-		"2": "name"                     // block name
+		"2": "name",                    // block name
+		"331": "ref_id"                 // list of reference ids related to the block
 	},
 	"LTYPE": {
 		"2": "name",                    // Linetype name
@@ -802,10 +928,12 @@
 	"blocks": {
 		"2": "name",                    // Block name
 		"4": "description",             // Block description
+		"5": "id",                      // block references related to the block
 		"8": "layer",                   // Layer name
 		"10": "base_point.x",           // x value of base point
 		"20": "base_point.y",           // y value of base point
 		"30": "base_point.z",           // z value of base point
-		"100": "entities"               // the entities (drawing elements) in the block
+		"100": "entities",              // the entities (drawing elements) in the block
+		"330": "ref_id"                 // the id of the entity which refers to the block		
 	}
 }

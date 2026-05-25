@@ -62,7 +62,7 @@ fs.readFile('C:\\test\\example.dxf', 'utf8', (err, data) => {
 - More properties are added in <code>AcDbHatch</code>
 - All entities and blocks now have additional property (```id```) which is the unique handle related to a particular entity or block. Additionally, blocks also have additional property of ```referencing_id```.
 - The object of the ```Entities``` class now returns more properties.
-- The arc length calculation for Ellipse now uses a 16-point Gauss-quadrature integration instead of the previous Ramanujan's second formula.
+- The length calculation for Ellipse now uses a 16-point Gauss-quadrature integration instead of the previous Ramanujan's second formula.
 
 # Constructor
 

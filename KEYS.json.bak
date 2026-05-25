@@ -1,4 +1,4 @@
-module.exports = {
+{
 	// entities
 	"AcDbPoint": ["layer", "id", "ref_id", "etype", "subclass", "line_type", "line_scale", "color", "visibility", "x", "y", "z"],
 	"AcDbLine": ["layer", "id", "ref_id", "etype", "subclass", "line_type", "line_scale", "color", "visibility", "start_x", "start_y", "start_z", "end_x", "end_y", "end_z", "length", "line_type"],
@@ -46,5 +46,5 @@ module.exports = {
 	"STYLE": ["text_height", "name", "width_factor", "oblique_angle", "type", "text_type", "font_type"],
 	"UCS": ["name", "origin", "x_axis_direction", "y_axis_direction", "orthographic_origin", "orthographic_type", "elevation"],
 	// blocks
-	"blocks": ["name", "id", "description", "layer", "base_point", "entities", "ref_id"]
-};
+	"blocks": ["name", "description", "layer", "base_point", "entities", "ref_id"]
+}

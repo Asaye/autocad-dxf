@@ -1,4 +1,4 @@
-module.exports = {
+{
 	"AcDbArc": {
 		"0": "etype",          // type of entity, ARC
 		"5": "id",             // Entity handle - a unique id for the element; text string of up to 16 hexadecimal digits
@@ -13,9 +13,9 @@ module.exports = {
 		"48": "line_scale",    // line type scale
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass",     // subclass marker, AcDbCircle
-		"330": "ref_id",       // the id(s) of entities referring to the current entity
-		"331": "ref_id"        // the id(s) of entities referring to the current entity
+		"100": "subclass",      // subclass marker, AcDbCircle
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbBlockReference": {
 		"0": "etype",          // type of entity, INSERT
@@ -33,9 +33,9 @@ module.exports = {
 		"60": "visibility",    // object visibility
 		"70": "column_count",  // column count
 		"71": "row_count",     // row count
-		"100": "subclass",     // subclass marker, AcDbBlockReference
-		"330": "ref_id",       // the id(s) of entities referring to the current entity
-		"331": "ref_id"        // the id(s) of entities referring to the current entity
+		"100": "subclass"      // subclass marker, AcDbBlockReference
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbCircle": {
 		"0": "etype",          // type of entity, CIRCLE
@@ -50,8 +50,8 @@ module.exports = {
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
 		"100": "subclass/specific_type",      // subclass marker (AcDbCircle)/the specific type of the circle (AcDbArc)	
-		"330": "ref_id",       // the id(s) of entities referring to the current entity
-		"331": "ref_id",       // the id(s) of entities referring to the current entity
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 		"**": "area",          // area of a circle or the visible segment of a circular arc
 		"***": "area_sector",  // area of a sector for arcs
 		"****": "circumference/arc_length"     // circumeference of arc length
@@ -89,9 +89,9 @@ module.exports = {
 		"62": "color",                       // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                        // type of the dimension line
 		"71": "attachement_point",           // attachment point
-		"100": "subclass/specific_type",     // subclass marker (AcDbDimension)/the specific type of the dimension (AcDbAlignedDimension/AcDb3PointAngularDimension/AcDbDiametricDimension/AcDbRadialDimension)		
-	    "330": "ref_id",                     // the id(s) of entities referring to the current entity
-		"331": "ref_id"                      // the id(s) of entities referring to the current entity
+		"100": "subclass/specific_type"      // subclass marker (AcDbDimension)/the specific type of the dimension (AcDbAlignedDimension/AcDb3PointAngularDimension/AcDbDiametricDimension/AcDbRadialDimension)		
+	"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbEllipse": {
 		"0": "etype",          // type of entity, ELLIPSE
@@ -115,8 +115,8 @@ module.exports = {
 		"60": "visibility",    // object visibility
 		"62": "color",         // color number, 0 = ByBlock, 256 = ByLayer
 		"100": "subclass",     // subclass marker, AcDbEllipse
-		"330": "ref_id",       // the id(s) of entities referring to the current entity
-		"331": "ref_id",       // the id(s) of entities referring to the current entity
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 		"**": "area",          // area of a circle or the visible segment of an elliptical arc
 		"***": "area_sector",  // area of a sector for arcs
 		"****": "area_full"    // the full area of the ellipse in case the ellipse is an arc
@@ -146,9 +146,9 @@ module.exports = {
 		"49": "align_angle",                 // Align angle (in radians)
 		"70": "sweep_alignment_option",      // Sweep alignment option
 		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbExtrudedSurface
-		"310": "binary_data",                // binary data
-		"330": "ref_id",                     // the id(s) of entities referring to the current entity
-		"331": "ref_id"                      // the id(s) of entities referring to the current entity
+		"310": "binary_data"                 // binary data
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbFace": {
 		"0": "etype",        // type of entity, 3DFACE
@@ -169,9 +169,9 @@ module.exports = {
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "invisible_edge",       // invisible edge flag, First/Second/Third/Fourth
-		"100": "subclass",    // subclass marker, AcDbFace
-		"330": "ref_id",      // the id(s) of entities referring to the current entity
-		"331": "ref_id"       // the id(s) of entities referring to the current entity
+		"100": "subclass"    // subclass marker, AcDbFace
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbFcf": {
 		"0": "etype",                     // type of entity, TOLERANCE
@@ -192,7 +192,7 @@ module.exports = {
 		"100": "subclass",                // subclass marker, AcDbFcf
 		"210": "extrusion_direction.x",   // the x coordinate of the Extrusion direction	
 		"220": "extrusion_direction.y",   // the y coordinate of the Extrusion direction
-		"230": "extrusion_direction.z",   // the z coordinate of the Extrusion direction		
+		"230": "extrusion_direction.z"    // the z coordinate of the Extrusion direction		
 		"330": "ref_id",                  // the id(s) of entities referring to the current entity
 		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
@@ -245,8 +245,8 @@ module.exports = {
 		"210": "extrusion_direction.x",    // the x coordinate of the extrusion direction
 		"220": "extrusion_direction.y",    // the y coordinate of the extrusion direction
 		"230": "extrusion_direction.z",    // the z coordinate of the extrusion direction
-		"330": "ref_id",                   // the id(s) of entities referring to the current entity
-		"331": "ref_id",                   // the id(s) of entities referring to the current entity
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 		"421": "gradient_colors.rgb",      // RGB values for the gradient colors
 		"450": "gradient",                 // true if the hatch is of gradient color or false otherwise
 		"452": "gradient_composition",     // Gradient color composition, Two-color gradient/Single-color gradient
@@ -274,9 +274,9 @@ module.exports = {
 		"42": "turn_height",               // the number of turns
 		"48": "line_scale",                // line type scale
 		"60": "visibility",                // object visibility
-		"100": "subclass",                 // subclass marker, AcDbHelix
-		"330": "ref_id",                   // the id(s) of entities referring to the current entity
-		"331": "ref_id"                    // the id(s) of entities referring to the current entity
+		"100": "subclass"                  // subclass marker, AcDbHelix
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbLeader": {
 		"0": "etype",                               // type of entity, LEADER
@@ -310,9 +310,9 @@ module.exports = {
 		"230": "normal_vector.z",                   // the z value of the normal vector
 		"231": "horizontal_direction.z",            // the z value of the “Horizontal” direction for leader
 		"232": "offset_from_insertion_point.z",     // the z value of the Offset of last leader vertex from block reference insertion point
-		"233": "offset_from_annotation.z",          // the z value of the Offset of last leader vertex from annotation placement point
-		"330": "ref_id",                            // the id(s) of entities referring to the current entity
-		"331": "ref_id"                             // the id(s) of entities referring to the current entity
+		"233": "offset_from_annotation.z"           // the z value of the Offset of last leader vertex from annotation placement point
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbLine": {
 		"0": "etype",        // type of entity, LINE
@@ -328,10 +328,10 @@ module.exports = {
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass",   // subclass marker. AcDbLine in this case		
-		"330": "ref_id",     // the id(s) of entities referring to the current entity
-		"331": "ref_id",     // the id(s) of entities referring to the current entity
+		"100": "subclass",   // subclass marker. AcDbLine in this case
 		"**": "length"       // length of the line
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbLoftedSurface": {
 		"0": "etype",                    // type of entity, SURFACE
@@ -346,9 +346,9 @@ module.exports = {
 		"43": "start_draft_magnitude",   // Start draft magnitude
 		"44": "end_draft_magnitude",     // End draft magnitude		
 		"48": "scale_factor",            // Scale factor
-		"100": "subclass/specific_type", // subclass marker, AcDbModelerGeometry/AcDbLoftedSurface
-		"330": "ref_id",                 // the id(s) of entities referring to the current entity
-		"331": "ref_id"                  // the id(s) of entities referring to the current entity
+		"100": "subclass/specific_type"  // subclass marker, AcDbModelerGeometry/AcDbLoftedSurface
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbModelerGeometry": {
 		"0": "etype",               // type of entity, 3DSOLID
@@ -361,9 +361,9 @@ module.exports = {
 		"48": "line_scale",         // line type scale
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass",          // subclass marker, AcDbMText
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"100": "subclass"           // subclass marker, AcDbMText
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbMText": {
 		"0": "etype",               // type of entity, MTEXT
@@ -381,9 +381,9 @@ module.exports = {
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
 		"72": "drawing_direction",  // the drawing direction of the text
-		"100": "subclass",          // subclass marker, AcDbMText
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"100": "subclass"           // subclass marker, AcDbMText
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbMline": {
 		"0": "etype",                            // type of entity, MLINE
@@ -412,9 +412,9 @@ module.exports = {
 		"72": "number_of_vertices",              // number of vertices
 		"74": "vertices.number_of_parameters",   // Number of parameters for this element 
 		"75": "vertices.number_of_area_fill_parameters",              // Number of area fill parameters for this element 
-		"100": "subclass",                       // subclass marker, AcDbMline		
-		"330": "ref_id",                         // the id(s) of entities referring to the current entity
-		"331": "ref_id"                          // the id(s) of entities referring to the current entity
+		"100": "subclass"                        // subclass marker, AcDbMline		
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbPoint": {
 		"0": "etype",        // type of entity, POINT
@@ -427,9 +427,9 @@ module.exports = {
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass",   // subclass marker. AcDbPoint in this case
-		"330": "ref_id",     // the id(s) of entities referring to the current entity
-		"331": "ref_id"      // the id(s) of entities referring to the current entity
+		"100": "subclass"    // subclass marker. AcDbPoint in this case
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbPolyline": {
 		"0": "etype",                     // type of entity, LWPOLYLINE
@@ -447,7 +447,7 @@ module.exports = {
 		"62": "color",                    // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                     // type of the polyline, 'Closed' or 'Plinegen'
 		"90": "number_of_vertices",       // number of vertices		
-		"100": "subclass",                // subclass marker, AcDbPolyline
+		"100": "subclass"                 // subclass marker, AcDbPolyline
 		"330": "ref_id",                  // the id(s) of entities referring to the current entity
 		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
@@ -467,7 +467,7 @@ module.exports = {
 		"62": "color",                    // color number, 0 = ByBlock, 256 = ByLayer
 		"70": "type",                     // type of the polyline, 'Closed' or 'Plinegen'
 		"90": "number_of_vertices",       // number of vertices		
-		"100": "subclass",                // subclass marker, AcDb3dPolyline
+		"100": "subclass"                 // subclass marker, AcDb3dPolyline
 		"330": "ref_id",                  // the id(s) of entities referring to the current entity
 		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
@@ -495,7 +495,7 @@ module.exports = {
 		"70": "image_display_properties", // image display properties
 		"71": "clip_boundary_type",       // type of clip boundary, Rectangular/Polygonal		
 		"100": "subclass",                // subclass marker, AcDbRasterImage
-		"290": "clip_mode",               // clip mode flag, Outside/Inside
+		"290": "clip_mode"                // clip mode flag, Outside/Inside
 		"330": "ref_id",                  // the id(s) of entities referring to the current entity
 		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
@@ -513,9 +513,9 @@ module.exports = {
 		"48": "line_scale",         // line type scale
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer		
-		"100": "subclass",          // subclass marker, AcDbRay
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"100": "subclass"           // subclass marker, AcDbRay
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbRevolvedSurface": {
 		"0": "etype",               // type of entity, SURFACE
@@ -540,9 +540,9 @@ module.exports = {
 		"71": "n_u_isolines",       // Number of U isolines
 		"72": "n_v_isolines",       // Number of V isolines
 		"100": "subclass/specific_type",  // subclass marker, AcDbModelerGeometry/AcDbRevolvedSurface
-		"310": "binary_data",       // binary data
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"310": "binary_data"        // binary data
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbShape": {
 		"0": "etype",               // type of entity, SHAPE
@@ -558,9 +558,9 @@ module.exports = {
 		"50": "rotation",           // rotation angle
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass",          // subclass marker, AcDbShape
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"100": "subclass"           // subclass marker, AcDbShape
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbSpline": {
 		"0": "etype",                      // type of entity, SPLINE
@@ -589,9 +589,9 @@ module.exports = {
 		"72": "number_of_knots",           // number of knots
 		"73": "number_of_control_points",  // number of control points
 		"74": "number_of_fit_points",      // number of fit points
-		"100": "subclass",                 // subclass marker, AcDbSpline
-		"330": "ref_id",                   // the id(s) of entities referring to the current entity
-		"331": "ref_id"                    // the id(s) of entities referring to the current entity
+		"100": "subclass"                  // subclass marker, AcDbSpline
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbSweptSurface": {
 		"0": "etype",                        // type of entity, SURFACE
@@ -618,9 +618,9 @@ module.exports = {
 		"49": "align_angle",                 // Align angle (in radians)
 		"70": "sweep_alignment_option",      // Sweep alignment option
 		"100": "subclass/specific_type",     // subclass marker, AcDbModelerGeometry/AcDbSweptSurface
-		"310": "binary_data",                // binary data
-		"330": "ref_id",                     // the id(s) of entities referring to the current entity
-		"331": "ref_id"                      // the id(s) of entities referring to the current entity
+		"310": "binary_data"                 // binary data
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbTable": {
 		"0": "etype",                               // type of entity, ACAD_TABLE
@@ -659,9 +659,9 @@ module.exports = {
 		"279": "line_weight_top",                   // Lineweight for the top border of the cell, one for each cell
 		"283": "fill_color_on",                     // Boolean flag for whether the fill color is on, one for each cell
 		"289": "top_border_visible",                // Boolean flag for the visibility of the top border of the cell, one for each cell
-		"310": "proxy_graphics_data",               // Data for proxy entity graphics 
-		"330": "ref_id",                            // the id(s) of entities referring to the current entity
-		"331": "ref_id"                             // the id(s) of entities referring to the current entity
+		"310": "proxy_graphics_data"               // Data for proxy entity graphics 
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbText": {
 		"0": "etype",               // type of entity, TEXT/ATTRIB/ATTDEF
@@ -680,9 +680,9 @@ module.exports = {
 		"50": "rotation",           // rotation angle 
 		"60": "visibility",         // object visibility
 		"62": "color",              // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass",          // subclass marker, AcDbText
-		"330": "ref_id",            // the id(s) of entities referring to the current entity
-		"331": "ref_id"             // the id(s) of entities referring to the current entity
+		"100": "subclass"           // subclass marker, AcDbText
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},	
 	"AcDbTrace": {
 		"0": "etype",        // type of entity, TRACE
@@ -702,9 +702,9 @@ module.exports = {
 		"48": "line_scale",  // line type scale
 		"60": "visibility",  // object visibility
 		"62": "color",       // color number, 0 = ByBlock, 256 = ByLayer
-		"100": "subclass",   // subclass marker, AcDbTrace
-		"330": "ref_id",     // the id(s) of entities referring to the current entity
-		"331": "ref_id"      // the id(s) of entities referring to the current entity
+		"100": "subclass"    // subclass marker, AcDbTrace
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbVertex": {
 		"0": "etype",         // type of entity, VERTEX
@@ -722,8 +722,8 @@ module.exports = {
 		"62": "color",        // color number, 0 = ByBlock, 256 = ByLayer				
 		"70": "type",         // type of the vertex
 		"100": "subclass",     // subclass marker, AcDbVertex
-		"330": "ref_id",       // the id(s) of entities referring to the current entity
-		"331": "ref_id"        // the id(s) of entities referring to the current entity
+		"330": "ref_id",                  // the id(s) of entities referring to the current entity
+		"331": "ref_id"                   // the id(s) of entities referring to the current entity
 	},
 	"AcDbXline": {
 		"0": "etype",        		      // type of entity, XLINE
@@ -936,4 +936,4 @@ module.exports = {
 		"100": "entities",              // the entities (drawing elements) in the block
 		"330": "ref_id"                 // the id of the entity which refers to the block		
 	}
-};
+}

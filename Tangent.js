@@ -59,7 +59,7 @@ const tangent = (circle, angle, length, plane, getAxes, tolerance) => {
 			return [];
 		}
 		
-		const m = -(xc - x)/(yc - y);
+		let m = -(xc - x)/(yc - y);
 		let b;
 		
 		if (Math.abs(m) == Infinity) {

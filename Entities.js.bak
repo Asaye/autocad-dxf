@@ -2666,7 +2666,7 @@ const Entities = class {
 					COUNT = this.getBlocks(array, COUNT + 4);
 					COUNT = this.getEntities(array, COUNT + 4);
 					COUNT = this.getObjects(array, COUNT + 4);
-					this.getThumbnails(array, COUNT);
+					getThumbnails = (array, COUNT);
 					return;
 				} 
 			}
